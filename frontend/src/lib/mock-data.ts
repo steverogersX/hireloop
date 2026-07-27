@@ -7,6 +7,22 @@ export type Workplace = "Remote" | "Hybrid" | "On-site";
 export type Employment = "Full-time" | "Contract" | "Part-time" | "Internship";
 export type Seniority = "Junior" | "Mid" | "Senior" | "Staff" | "Lead";
 
+export const WORKPLACES: Workplace[] = ["Remote", "Hybrid", "On-site"];
+export const EMPLOYMENT_TYPES: Employment[] = [
+  "Full-time",
+  "Contract",
+  "Part-time",
+  "Internship",
+];
+export const SENIORITIES: Seniority[] = [
+  "Junior",
+  "Mid",
+  "Senior",
+  "Staff",
+  "Lead",
+];
+export const SALARY_FLOORS = [60000, 80000, 100000, 120000];
+
 export type Company = {
   id: string;
   name: string;
@@ -90,6 +106,11 @@ export type Alert = {
   frequency: "Daily" | "Weekly" | "Instant";
   newCount: number;
   active: boolean;
+  channels: string[];
+  created: string;
+  lastSent: string;
+  matchesTotal: number;
+  filters: string[];
 };
 
 export type ActivityItem = {
@@ -948,6 +969,11 @@ export const alerts: Alert[] = [
     frequency: "Daily",
     newCount: 12,
     active: true,
+    channels: ["Email", "Push"],
+    created: "Created 14 Mar",
+    lastSent: "This morning, 08:00",
+    matchesTotal: 214,
+    filters: ["Senior", "Hybrid or Remote", "€80k+"],
   },
   {
     id: "al-2",
@@ -956,6 +982,11 @@ export const alerts: Alert[] = [
     frequency: "Weekly",
     newCount: 4,
     active: true,
+    channels: ["Email"],
+    created: "Created 2 Apr",
+    lastSent: "Monday, 08:00",
+    matchesTotal: 61,
+    filters: ["Mid or Senior", "Remote", "Contract or Full-time"],
   },
   {
     id: "al-3",
@@ -964,6 +995,369 @@ export const alerts: Alert[] = [
     frequency: "Instant",
     newCount: 0,
     active: false,
+    channels: ["Push"],
+    created: "Created 19 May",
+    lastSent: "Paused 3 weeks ago",
+    matchesTotal: 8,
+    filters: ["Staff or Lead", "€100k+"],
+  },
+  {
+    id: "al-4",
+    query: "React · design systems",
+    location: "Netherlands",
+    frequency: "Daily",
+    newCount: 7,
+    active: true,
+    channels: ["Email"],
+    created: "Created 8 Jun",
+    lastSent: "This morning, 08:00",
+    matchesTotal: 96,
+    filters: ["React", "Design systems"],
+  },
+  {
+    id: "al-5",
+    query: "Four-day week",
+    location: "Remote — Europe",
+    frequency: "Weekly",
+    newCount: 2,
+    active: true,
+    channels: ["Email", "Push"],
+    created: "Created 21 Jun",
+    lastSent: "Monday, 08:00",
+    matchesTotal: 19,
+    filters: ["Remote", "Full-time"],
+  },
+];
+
+export type SavedEntry = {
+  jobId: string;
+  savedOn: string;
+  daysAgo: number;
+  folder: "Shortlist" | "Maybe" | "Researching";
+  note: string;
+  closingIn?: string;
+};
+
+export const savedEntries: SavedEntry[] = [
+  {
+    jobId: "j-1042",
+    savedOn: "27 Jul",
+    daysAgo: 0,
+    folder: "Shortlist",
+    note: "Dara replied fast last time. Ask about the design system roadmap.",
+    closingIn: "Closes in 6 days",
+  },
+  {
+    jobId: "j-1038",
+    savedOn: "26 Jul",
+    daysAgo: 1,
+    folder: "Shortlist",
+    note: "Equity is the real upside here. Worth the canvas learning curve.",
+  },
+  {
+    jobId: "j-1031",
+    savedOn: "24 Jul",
+    daysAgo: 3,
+    folder: "Maybe",
+    note: "Relocation is the open question. Check the housing stipend.",
+    closingIn: "Closes in 12 days",
+  },
+  {
+    jobId: "j-1008",
+    savedOn: "22 Jul",
+    daysAgo: 5,
+    folder: "Maybe",
+    note: "Six months only, but the brand system work looks genuinely good.",
+  },
+  {
+    jobId: "j-1019",
+    savedOn: "18 Jul",
+    daysAgo: 9,
+    folder: "Researching",
+    note: "Boston is a stretch. Read the accessibility engineering posts first.",
+  },
+  {
+    jobId: "j-0998",
+    savedOn: "15 Jul",
+    daysAgo: 12,
+    folder: "Researching",
+    note: "Already applied to the other Northwind role — check with Dara first.",
+  },
+];
+
+export const savedFolders = ["Shortlist", "Maybe", "Researching"] as const;
+
+export function savedJobs() {
+  return savedEntries
+    .map((entry) => ({
+      entry,
+      job: jobs.find((job) => job.id === entry.jobId),
+    }))
+    .filter((row): row is { entry: SavedEntry; job: Job } => Boolean(row.job));
+}
+
+export const savedSearches = [
+  {
+    id: "ss-1",
+    name: "Senior frontend, Amsterdam",
+    detail: "Senior · Hybrid · €80k+ · React",
+    newCount: 12,
+    runAt: "Updated 4 minutes ago",
+  },
+  {
+    id: "ss-2",
+    name: "Remote staff roles",
+    detail: "Staff or Lead · Remote EU · €100k+",
+    newCount: 3,
+    runAt: "Updated this morning",
+  },
+  {
+    id: "ss-3",
+    name: "Design engineering contracts",
+    detail: "Contract · Design systems · Any location",
+    newCount: 0,
+    runAt: "Updated yesterday",
+  },
+];
+
+export type Message = {
+  id: string;
+  from: "them" | "me";
+  body: string;
+  at: string;
+};
+
+export type Thread = {
+  id: string;
+  company: Company;
+  person: string;
+  personRole: string;
+  initials: string;
+  subject: string;
+  preview: string;
+  lastAt: string;
+  unread: number;
+  starred: boolean;
+  messages: Message[];
+};
+
+export const threads: Thread[] = [
+  {
+    id: "t-1",
+    company: companies.tessera,
+    person: "Jonas Weber",
+    personRole: "Principal Engineer",
+    initials: "JW",
+    subject: "System design round on Thursday",
+    preview: "Sending the brief now so you have a couple of days with it.",
+    lastAt: "18m ago",
+    unread: 2,
+    starred: true,
+    messages: [
+      {
+        id: "m-1",
+        from: "them",
+        body: "Hi Priya — good news, the team wants to move you to the system design round. Thursday 14:00 CEST works if it still does for you.",
+        at: "Yesterday, 16:20",
+      },
+      {
+        id: "m-2",
+        from: "me",
+        body: "Thursday at 14:00 works. Is there anything you would like me to prepare, or is it a cold problem?",
+        at: "Yesterday, 17:04",
+      },
+      {
+        id: "m-3",
+        from: "them",
+        body: "Mostly cold, but it will centre on a streaming annotation surface — thousands of items an hour, keyboard-first. Worth skimming how you have handled virtualisation before.",
+        at: "18m ago",
+      },
+      {
+        id: "m-4",
+        from: "them",
+        body: "Sending the brief now so you have a couple of days with it.",
+        at: "18m ago",
+      },
+    ],
+  },
+  {
+    id: "t-2",
+    company: companies.northwind,
+    person: "Dara Okonkwo",
+    personRole: "Talent Partner",
+    initials: "DO",
+    subject: "Senior Frontend Engineer — next steps",
+    preview: "Would a call on Monday at 16:00 suit you?",
+    lastAt: "5h ago",
+    unread: 1,
+    starred: false,
+    messages: [
+      {
+        id: "m-5",
+        from: "them",
+        body: "Priya, I came across your profile again while looking at the design system role. Your Kestrel work is exactly the shape we need.",
+        at: "5h ago",
+      },
+      {
+        id: "m-6",
+        from: "them",
+        body: "Would a call on Monday at 16:00 suit you? Thirty minutes, no prep needed.",
+        at: "5h ago",
+      },
+    ],
+  },
+  {
+    id: "t-3",
+    company: companies.lumen,
+    person: "Mette Sørensen",
+    personRole: "Director of Engineering",
+    initials: "MS",
+    subject: "Take-home brief",
+    preview: "No rush on this — Monday is fine, and take the weekend off.",
+    lastAt: "Yesterday",
+    unread: 0,
+    starred: true,
+    messages: [
+      {
+        id: "m-7",
+        from: "them",
+        body: "Attaching the take-home. It is scoped to about four hours and we mean that — if it runs long, stop and tell us where you got to.",
+        at: "Yesterday, 09:12",
+      },
+      {
+        id: "m-8",
+        from: "me",
+        body: "Got it, thank you. I will send it back by Monday.",
+        at: "Yesterday, 09:40",
+      },
+      {
+        id: "m-9",
+        from: "them",
+        body: "No rush on this — Monday is fine, and take the weekend off.",
+        at: "Yesterday, 09:44",
+      },
+    ],
+  },
+  {
+    id: "t-4",
+    company: companies.paperkite,
+    person: "Inês Carvalho",
+    personRole: "Co-founder & CTO",
+    initials: "IC",
+    subject: "Offer — Design Engineer",
+    preview: "Happy to walk through the day rate and the scope again.",
+    lastAt: "3 days ago",
+    unread: 0,
+    starred: true,
+    messages: [
+      {
+        id: "m-10",
+        from: "them",
+        body: "Priya, we would love to have you. Offer attached — six months, €580 a day, starting September.",
+        at: "3 days ago, 11:02",
+      },
+      {
+        id: "m-11",
+        from: "me",
+        body: "Thank you, this is exciting. Give me until the end of the month — I have two processes finishing.",
+        at: "3 days ago, 13:15",
+      },
+      {
+        id: "m-12",
+        from: "them",
+        body: "Completely fair. Happy to walk through the day rate and the scope again if that helps you decide.",
+        at: "3 days ago, 13:31",
+      },
+    ],
+  },
+  {
+    id: "t-5",
+    company: companies.meridian,
+    person: "Callum Wright",
+    personRole: "Lead Engineer, Trading UI",
+    initials: "CW",
+    subject: "Role paused",
+    preview: "We are pausing the search this quarter. Sorry for the runaround.",
+    lastAt: "1 week ago",
+    unread: 0,
+    starred: false,
+    messages: [
+      {
+        id: "m-13",
+        from: "them",
+        body: "Priya — we are pausing the search this quarter. Sorry for the runaround. If it reopens you are the first call.",
+        at: "1 week ago",
+      },
+    ],
+  },
+];
+
+export const notificationSettings = [
+  {
+    id: "n-alerts",
+    label: "Job alert digests",
+    detail: "New roles matching your saved alerts.",
+    email: true,
+    push: true,
+  },
+  {
+    id: "n-application",
+    label: "Application updates",
+    detail: "When a company moves you to a new stage.",
+    email: true,
+    push: true,
+  },
+  {
+    id: "n-messages",
+    label: "Messages",
+    detail: "When a recruiter writes to you.",
+    email: true,
+    push: false,
+  },
+  {
+    id: "n-views",
+    label: "Profile views",
+    detail: "A weekly summary of who looked at your profile.",
+    email: false,
+    push: false,
+  },
+  {
+    id: "n-interviews",
+    label: "Interview reminders",
+    detail: "One day and one hour before each interview.",
+    email: true,
+    push: true,
+  },
+  {
+    id: "n-product",
+    label: "Product news",
+    detail: "Occasional updates about HireLoop itself.",
+    email: false,
+    push: false,
+  },
+];
+
+export const connectedAccounts = [
+  {
+    id: "ca-github",
+    name: "GitHub",
+    detail: "Imports your public repositories into your profile.",
+    connected: true,
+    since: "Connected since March",
+  },
+  {
+    id: "ca-linkedin",
+    name: "LinkedIn",
+    detail: "Keeps your work history in sync.",
+    connected: true,
+    since: "Connected since March",
+  },
+  {
+    id: "ca-google",
+    name: "Google Calendar",
+    detail: "Adds interviews to your calendar automatically.",
+    connected: false,
+    since: "Not connected",
   },
 ];
 

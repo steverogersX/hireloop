@@ -17,6 +17,7 @@ import {
   Settings,
   Sparkles,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -47,15 +48,20 @@ type NavItem = {
 const searchNav: NavItem[] = [
   { title: "Overview", icon: LayoutGrid, href: "/dashboard" },
   { title: "Find jobs", icon: Search, badge: "128", href: "/jobs" },
-  { title: "Saved jobs", icon: Bookmark, badge: "9" },
-  { title: "Job alerts", icon: Bell, badge: "16" },
+  { title: "Saved jobs", icon: Bookmark, badge: "6", href: "/saved" },
+  { title: "Job alerts", icon: Bell, badge: "25", href: "/alerts" },
   { title: "Companies", icon: Building2, href: "/companies" },
 ];
 
 const trackNav: NavItem[] = [
-  { title: "Applications", icon: FileText, badge: "34" },
-  { title: "Messages", icon: MessagesSquare, badge: "3" },
+  { title: "Applications", icon: FileText, badge: "14", href: "/applications" },
+  { title: "Messages", icon: MessagesSquare, badge: "3", href: "/messages" },
   { title: "Profile & resume", icon: CircleUser, href: "/profile" },
+];
+
+const supportNav: NavItem[] = [
+  { title: "Settings", icon: Settings, href: "/settings" },
+  { title: "Help & feedback", icon: LifeBuoy },
 ];
 
 function isCurrent(pathname: string, href?: string) {
@@ -106,20 +112,7 @@ export function AppSidebar() {
 
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Settings">
-                  <Settings />
-                  <span>Settings</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Help">
-                  <LifeBuoy />
-                  <span>Help & feedback</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
+            <NavList items={supportNav} pathname={pathname} />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
@@ -134,7 +127,15 @@ export function AppSidebar() {
             See who viewed your profile and how you rank against other
             applicants.
           </p>
-          <Button size="sm" className="mt-2.5 w-full">
+          <Button
+            size="sm"
+            className="mt-2.5 w-full"
+            onClick={() =>
+              toast("HireLoop Pro, 14 days free", {
+                description: "No card needed. Cancel from Settings any time.",
+              })
+            }
+          >
             Start 14-day trial
           </Button>
         </div>

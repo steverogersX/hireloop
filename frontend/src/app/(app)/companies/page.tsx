@@ -56,9 +56,11 @@ export default function CompaniesPage() {
             open roles between them.
           </p>
         </div>
-        <Button variant="outline">
-          <Bell />
-          Companies you follow
+        <Button variant="outline" asChild>
+          <Link href="/alerts">
+            <Bell />
+            Manage job alerts
+          </Link>
         </Button>
       </header>
 

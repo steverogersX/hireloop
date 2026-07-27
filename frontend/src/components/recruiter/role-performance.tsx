@@ -25,6 +25,7 @@ import {
   formatBand,
   memberById,
   openPostings,
+  postingHref,
   statusTone,
 } from "@/lib/recruiter-mock-data";
 
@@ -70,7 +71,12 @@ export function RolePerformance() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-heading text-sm font-medium">
-                      {role.title}
+                      <Link
+                        href={postingHref(role)}
+                        className="rounded-sm hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                      >
+                        {role.title}
+                      </Link>
                     </h3>
                     <Badge className={statusTone[role.status]}>
                       {role.status}
@@ -148,9 +154,11 @@ export function RolePerformance() {
                       {role.conversion}% apply rate
                     </span>
                   </span>
-                  <Button variant="ghost" size="xs">
-                    Open pipeline
-                    <ArrowRight data-icon="inline-end" />
+                  <Button variant="ghost" size="xs" asChild>
+                    <Link href={postingHref(role)}>
+                      Open pipeline
+                      <ArrowRight data-icon="inline-end" />
+                    </Link>
                   </Button>
                 </div>
               </div>

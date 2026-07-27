@@ -77,7 +77,12 @@ export function ResumeFiles() {
                     Make default
                   </Button>
                 )}
-                <Button variant="ghost" size="icon-sm" aria-label="Download">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Download ${file.name}`}
+                  onClick={() => toast(`Downloading ${file.name}`)}
+                >
                   <Download />
                 </Button>
                 <Button

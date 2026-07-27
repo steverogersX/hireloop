@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, ExternalLink, Eye } from "lucide-react";
 
 import { ProfileStrengthCard } from "@/components/dashboard/side-panels";
 import { CareerHistory } from "@/components/profile/career-history";
+import { ProfileHeaderActions } from "@/components/profile/profile-header-actions";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { ResumeFiles } from "@/components/profile/resume-files";
 import { VisibilityCard } from "@/components/profile/visibility-card";
@@ -15,7 +15,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -58,17 +57,7 @@ export default function ProfilePage() {
             are holding your score at {candidate.profileStrength}%.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline">
-            <Download />
-            Download as PDF
-          </Button>
-          <Button variant="outline">
-            <Eye />
-            Preview public profile
-            <ExternalLink data-icon="inline-end" />
-          </Button>
-        </div>
+        <ProfileHeaderActions />
       </header>
 
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_21rem]">

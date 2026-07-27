@@ -1,19 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { toggleFollow, useIsFollowing } from "@/hooks/use-follows";
 
 export function FollowButton({
+  companyId,
   companyName,
   size,
 }: {
+  companyId: string;
   companyName: string;
   size?: React.ComponentProps<typeof Button>["size"];
 }) {
-  const [following, setFollowing] = useState(false);
+  const following = useIsFollowing(companyId);
 
   return (
     <Button
@@ -21,15 +23,15 @@ export function FollowButton({
       size={size}
       aria-pressed={following}
       onClick={() => {
-        setFollowing(!following);
+        const now = toggleFollow(companyId);
         toast(
-          following
-            ? `You will stop getting ${companyName} alerts`
-            : `Following ${companyName}`,
+          now
+            ? `Following ${companyName}`
+            : `You will stop getting ${companyName} alerts`,
           {
-            description: following
-              ? undefined
-              : "New roles here will appear in your alerts.",
+            description: now
+              ? "New roles here will appear in your alerts."
+              : undefined,
           }
         );
       }}

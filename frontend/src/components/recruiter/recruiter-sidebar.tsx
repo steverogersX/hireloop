@@ -50,15 +50,30 @@ type NavItem = {
 const hiringNav: NavItem[] = [
   { title: "Overview", icon: LayoutGrid, href: "/recruiter", exact: true },
   { title: "Job postings", icon: Briefcase, badge: "7", href: "/recruiter/jobs" },
-  { title: "Applicants", icon: Users, badge: "29" },
-  { title: "Interviews", icon: CalendarDays, badge: "4" },
+  {
+    title: "Applicants",
+    icon: Users,
+    badge: "29",
+    href: "/recruiter/applicants",
+  },
+  {
+    title: "Interviews",
+    icon: CalendarDays,
+    badge: "9",
+    href: "/recruiter/interviews",
+  },
 ];
 
 const companyNav: NavItem[] = [
-  { title: "Talent search", icon: UserSearch },
-  { title: "Company profile", icon: Building2 },
-  { title: "Messages", icon: MessagesSquare, badge: "5" },
-  { title: "Team", icon: Users },
+  { title: "Talent search", icon: UserSearch, href: "/recruiter/search" },
+  { title: "Company profile", icon: Building2, href: "/recruiter/company" },
+  {
+    title: "Messages",
+    icon: MessagesSquare,
+    badge: "2",
+    href: "/recruiter/messages",
+  },
+  { title: "Team", icon: Users, href: "/recruiter/team" },
 ];
 
 function isCurrent(pathname: string, item: NavItem) {
@@ -137,9 +152,22 @@ export function RecruiterSidebar() {
             <SidebarMenu>
               {companyNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton tooltip={item.title}>
-                    <item.icon />
-                    <span>{item.title}</span>
+                  <SidebarMenuButton
+                    asChild={Boolean(item.href)}
+                    isActive={isCurrent(pathname, item)}
+                    tooltip={item.title}
+                  >
+                    {item.href ? (
+                      <Link href={item.href}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    ) : (
+                      <>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </>
+                    )}
                   </SidebarMenuButton>
                   {item.badge && (
                     <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
@@ -154,15 +182,27 @@ export function RecruiterSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Settings">
-                  <Settings />
-                  <span>Settings</span>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/recruiter/settings"}
+                  tooltip="Settings"
+                >
+                  <Link href="/recruiter/settings">
+                    <Settings />
+                    <span>Settings</span>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Help">
-                  <LifeBuoy />
-                  <span>Help & feedback</span>
+                <SidebarMenuButton asChild tooltip="Help">
+                  <a
+                    href="https://hireloop.example/help"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                  >
+                    <LifeBuoy />
+                    <span>Help & feedback</span>
+                  </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -179,8 +219,8 @@ export function RecruiterSidebar() {
           <p className="mt-1 text-xs text-muted-foreground">
             Reach passive candidates who never see your job board post.
           </p>
-          <Button size="sm" className="mt-2.5 w-full">
-            Top up credits
+          <Button size="sm" className="mt-2.5 w-full" asChild>
+            <Link href="/recruiter/settings">Top up credits</Link>
           </Button>
         </div>
 

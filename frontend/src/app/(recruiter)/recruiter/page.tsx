@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Plus, Users } from "lucide-react";
 
 import { HiringStats } from "@/components/recruiter/hiring-stats";
@@ -41,13 +42,17 @@ export default function RecruiterOverviewPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline">
-            <Users />
-            Review applicants
+          <Button variant="outline" asChild>
+            <Link href="/recruiter/applicants">
+              <Users />
+              Review applicants
+            </Link>
           </Button>
-          <Button>
-            <Plus />
-            Post a job
+          <Button asChild>
+            <Link href="/recruiter/jobs/new">
+              <Plus />
+              Post a job
+            </Link>
           </Button>
         </div>
       </header>

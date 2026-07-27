@@ -7,7 +7,6 @@ import {
   Check,
   Clock3,
   Eye,
-  Flag,
   Globe,
   MapPin,
   Star,
@@ -15,7 +14,11 @@ import {
 } from "lucide-react";
 
 import { HiringProcess } from "@/components/companies/hiring-process";
-import { JobActions, StickyApplyBar } from "@/components/jobs/job-actions";
+import {
+  JobActions,
+  ReportListingButton,
+  StickyApplyBar,
+} from "@/components/jobs/job-actions";
 import { MatchRing } from "@/components/dashboard/match-ring";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -276,10 +279,7 @@ export default async function JobPage(props: PageProps<"/jobs/[slug]">) {
           </Card>
 
           <div className="flex justify-center">
-            <Button variant="ghost" size="sm">
-              <Flag />
-              Report this listing
-            </Button>
+            <ReportListingButton title={job.title} />
           </div>
         </div>
 
@@ -394,9 +394,11 @@ export default async function JobPage(props: PageProps<"/jobs/[slug]">) {
                   </div>
                 </div>
               ))}
-              <Button variant="outline" size="sm" className="w-full">
-                <CalendarClock />
-                Ask a question
+              <Button variant="outline" size="sm" className="w-full" asChild>
+                <Link href="/messages">
+                  <CalendarClock />
+                  Ask a question
+                </Link>
               </Button>
             </CardContent>
           </Card>

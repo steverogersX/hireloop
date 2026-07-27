@@ -1052,6 +1052,859 @@ export function postingCounts() {
   };
 }
 
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+export function postingSlug(posting: Posting) {
+  return `${slugify(posting.title)}-${posting.id}`;
+}
+
+export function postingHref(posting: Posting) {
+  return `/recruiter/jobs/${postingSlug(posting)}`;
+}
+
+export function allPostingSlugs() {
+  return postings.map((posting) => postingSlug(posting));
+}
+
+export function candidateHref(candidate: Candidate) {
+  return `/recruiter/applicants/${candidate.id}`;
+}
+
+export function candidatesForPosting(postingId: string) {
+  return candidates.filter((candidate) => candidate.postingId === postingId);
+}
+
+export function stageCounts(pool: Candidate[]) {
+  return PIPELINE_STAGES.reduce<Record<PipelineStage, number>>(
+    (acc, stage) => {
+      acc[stage] = pool.filter((candidate) => candidate.stage === stage).length;
+      return acc;
+    },
+    {} as Record<PipelineStage, number>
+  );
+}
+
+export type PostingDetail = {
+  about: string;
+  responsibilities: string[];
+  requirements: string[];
+  niceToHave: string[];
+  screening: string[];
+  process: { step: string; detail: string; duration: string }[];
+};
+
+const postingDetails: Record<string, PostingDetail> = {
+  "p-1042": {
+    about:
+      "Northwind's component library sits under six products and every customer-facing surface we ship. It has grown by accretion for three years and now needs an owner with a point of view.",
+    responsibilities: [
+      "Own the component library end to end: API design, accessibility, docs, release.",
+      "Pair weekly with design on the token system and the next generation of the library.",
+      "Cut migration paths for six product teams so upgrades never mean a rewrite sprint.",
+    ],
+    requirements: [
+      "Five or more years building product UI with React and TypeScript.",
+      "You have owned a shared component library other teams depended on.",
+      "Comfortable with WAI-ARIA patterns and keyboard interaction beyond the basics.",
+    ],
+    niceToHave: [
+      "Experience with a headless primitive library such as Radix or Ark.",
+      "You have run a design token pipeline across web and native.",
+    ],
+    screening: [
+      "Do you have the right to work in the Netherlands without sponsorship?",
+      "Link a component library or design system you owned.",
+      "What is your salary expectation for this role?",
+    ],
+    process: [
+      { step: "Intro call", detail: "30 minutes with a talent partner.", duration: "Week 1" },
+      { step: "Craft interview", detail: "Walk an engineer through something you built.", duration: "Week 1" },
+      { step: "Paid work session", detail: "Half a day on a real component. Paid at €600.", duration: "Week 2" },
+      { step: "Team and offer", detail: "Meet two future colleagues, decision in 48 hours.", duration: "Week 2" },
+    ],
+  },
+  "p-0998": {
+    about:
+      "Checkout and metering carry $40M of self-serve revenue and have not been touched in two years. You would rebuild both, with the freedom to change the data model underneath them.",
+    responsibilities: [
+      "Rebuild checkout, plan selection and the metering surfaces.",
+      "Work with finance on how usage becomes an invoice a customer understands.",
+      "Raise test coverage on billing paths that currently have none.",
+    ],
+    requirements: [
+      "Five or more years with React and TypeScript.",
+      "You have worked on billing, payments or another money-touching surface.",
+      "Serious about testing where mistakes are expensive.",
+    ],
+    niceToHave: ["Stripe Billing experience.", "You have run a pricing migration without a support spike."],
+    screening: [
+      "Are you based in a European time zone?",
+      "Describe a billing or payments surface you shipped.",
+      "What is your notice period?",
+    ],
+    process: [
+      { step: "Intro call", detail: "30 minutes with a talent partner.", duration: "Week 1" },
+      { step: "Technical interview", detail: "Live session on a metering UI problem.", duration: "Week 1" },
+      { step: "Team and offer", detail: "Meet the billing team, then a decision.", duration: "Week 2" },
+    ],
+  },
+};
+
+const defaultPostingDetail: PostingDetail = {
+  about:
+    "This posting is still using the default template. Open the editor to write the role description before it goes live.",
+  responsibilities: [
+    "Own the surface end to end, from schema to pixel.",
+    "Work directly with the team that depends on your output.",
+  ],
+  requirements: [
+    "Relevant production experience at the level of this role.",
+    "Comfortable owning a decision without a spec to hide behind.",
+  ],
+  niceToHave: ["Domain experience in developer tools."],
+  screening: [
+    "Do you have the right to work in the EU without sponsorship?",
+    "What is your salary expectation?",
+  ],
+  process: [
+    { step: "Intro call", detail: "30 minutes with a talent partner.", duration: "Week 1" },
+    { step: "Technical interview", detail: "A working session with the team.", duration: "Week 2" },
+    { step: "Team and offer", detail: "Meet the team, then a decision.", duration: "Week 3" },
+  ],
+};
+
+export function getPostingBySlug(slug: string) {
+  const posting = postings.find((item) => postingSlug(item) === slug);
+  if (!posting) return null;
+
+  const pool = candidatesForPosting(posting.id);
+
+  return {
+    posting,
+    detail: postingDetails[posting.id] ?? defaultPostingDetail,
+    owner: memberById(posting.ownerId),
+    pool,
+    counts: stageCounts(pool),
+  };
+}
+
+export type CandidateDetail = {
+  summary: string;
+  resume: string;
+  links: { label: string; href: string }[];
+  experience: { role: string; company: string; period: string; detail: string }[];
+  education: { school: string; qualification: string; year: string }[];
+  screening: { question: string; answer: string }[];
+  notes: {
+    id: string;
+    author: string;
+    initials: string;
+    avatarClass: string;
+    body: string;
+    when: string;
+  }[];
+  scorecards: { round: string; interviewer: string; rating: number; verdict: string }[];
+  timeline: { id: string; label: string; detail: string; when: string }[];
+};
+
+const candidateDetails: Record<string, CandidateDetail> = {
+  "c-501": {
+    summary:
+      "Eight years of product UI, the last three owning the component library at a Series B developer tools company. Wants the same problem with more scope, and lives twenty minutes from the office.",
+    resume: "priya-raman-frontend.pdf",
+    links: [
+      { label: "Portfolio", href: "priya.design" },
+      { label: "GitHub", href: "github.com/priyaraman" },
+    ],
+    experience: [
+      {
+        role: "Senior Frontend Engineer",
+        company: "Kestrel Systems",
+        period: "2021 — now",
+        detail: "Owns the design system used by four product teams. Cut bundle size 38%.",
+      },
+      {
+        role: "Frontend Engineer",
+        company: "Bolt Interactive",
+        period: "2018 — 2021",
+        detail: "Built the analytics dashboard and the charting layer under it.",
+      },
+    ],
+    education: [
+      { school: "TU Delft", qualification: "MSc Computer Science", year: "2017" },
+    ],
+    screening: [
+      { question: "Right to work in the Netherlands?", answer: "Yes, no sponsorship needed" },
+      { question: "Design system you owned", answer: "kestrel-ui — 60 components, 4 teams" },
+      { question: "Salary expectation", answer: "€95,000" },
+    ],
+    notes: [
+      {
+        id: "n-1",
+        author: "Dara Okonkwo",
+        initials: "DO",
+        avatarClass: "bg-primary/10 text-primary",
+        body: "Strongest application on this role. Portfolio shows real token pipeline work, not just Figma screenshots. Fast-track to the craft interview.",
+        when: "1h ago",
+      },
+    ],
+    scorecards: [],
+    timeline: [
+      { id: "tl-1", label: "Applied", detail: "Direct application with a note", when: "2h ago" },
+      { id: "tl-2", label: "Moved to In review", detail: "By Dara Okonkwo", when: "1h ago" },
+    ],
+  },
+  "c-498": {
+    summary:
+      "Ten years across platform and payments, most recently leading the Stripe Billing migration at a Polish fintech. Three-month notice is the main risk.",
+    resume: "marek-nowak-cv.pdf",
+    links: [{ label: "GitHub", href: "github.com/mnowak" }],
+    experience: [
+      {
+        role: "Staff Engineer, Platform",
+        company: "Zenta Pay",
+        period: "2020 — now",
+        detail: "Led the migration to Stripe Billing across three products with no downtime.",
+      },
+      {
+        role: "Senior Engineer",
+        company: "Allegro",
+        period: "2016 — 2020",
+        detail: "Checkout and payment methods for the largest marketplace in Poland.",
+      },
+    ],
+    education: [
+      { school: "AGH Kraków", qualification: "BSc Computer Science", year: "2014" },
+    ],
+    screening: [
+      { question: "European time zone?", answer: "Yes, CET" },
+      { question: "Billing surface you shipped", answer: "Zenta Pay metering and invoicing rebuild" },
+      { question: "Notice period", answer: "3 months" },
+    ],
+    notes: [
+      {
+        id: "n-2",
+        author: "Sven Aalbers",
+        initials: "SA",
+        avatarClass: "bg-indigo-600/15 text-indigo-600 dark:text-indigo-300",
+        body: "Deep billing background, exactly the migration we are about to run. Notice period is long — worth asking if it can be bought out.",
+        when: "4h ago",
+      },
+    ],
+    scorecards: [
+      { round: "Intro call", interviewer: "Dara Okonkwo", rating: 4, verdict: "Advance" },
+    ],
+    timeline: [
+      { id: "tl-1", label: "Applied", detail: "Referred by Mira Kovač", when: "5h ago" },
+      { id: "tl-2", label: "Moved to Interview", detail: "Craft interview booked for 11:00", when: "4h ago" },
+    ],
+  },
+  "c-495": {
+    summary:
+      "Seven years of product design with real production CSS. Offer sent three days ago; she asked for until Thursday to answer.",
+    resume: "amelie-dubois-portfolio.pdf",
+    links: [{ label: "Portfolio", href: "ameliedubois.fr" }],
+    experience: [
+      {
+        role: "Product Designer",
+        company: "Studio Vermeer",
+        period: "2021 — now",
+        detail: "Design system and marketing surfaces for three SaaS clients.",
+      },
+      {
+        role: "Designer",
+        company: "Rondo",
+        period: "2018 — 2021",
+        detail: "Shipped the mobile app redesign that lifted retention 14%.",
+      },
+    ],
+    education: [
+      { school: "ArtEZ Arnhem", qualification: "BA Graphic Design", year: "2017" },
+    ],
+    screening: [
+      { question: "Right to work in the Netherlands?", answer: "Yes" },
+      { question: "Portfolio link", answer: "ameliedubois.fr" },
+      { question: "Salary expectation", answer: "€88,000" },
+    ],
+    notes: [
+      {
+        id: "n-3",
+        author: "Lucia Ferrari",
+        initials: "LF",
+        avatarClass: "bg-rose-500/15 text-rose-600 dark:text-rose-300",
+        body: "Best portfolio in the round and she writes her own CSS. Team loved her. Send the offer at the top of the band.",
+        when: "4 days ago",
+      },
+    ],
+    scorecards: [
+      { round: "Intro call", interviewer: "Dara Okonkwo", rating: 4, verdict: "Advance" },
+      { round: "Portfolio review", interviewer: "Lucia Ferrari", rating: 5, verdict: "Strong hire" },
+      { round: "Team day", interviewer: "Sven Aalbers", rating: 4, verdict: "Hire" },
+    ],
+    timeline: [
+      { id: "tl-1", label: "Applied", detail: "Sourced via LinkedIn", when: "3 days ago" },
+      { id: "tl-2", label: "Moved to Offer", detail: "Offer letter sent", when: "3 days ago" },
+    ],
+  },
+};
+
+export function getCandidateById(id: string) {
+  const candidate = candidates.find((item) => item.id === id);
+  if (!candidate) return null;
+
+  const posting = postings.find((item) => item.id === candidate.postingId);
+
+  return {
+    candidate,
+    posting,
+    detail: candidateDetails[id] ?? fallbackDetail(candidate),
+  };
+}
+
+/** Keeps every applicant openable while only the featured few are hand-written. */
+function fallbackDetail(candidate: Candidate): CandidateDetail {
+  return {
+    summary: `${candidate.experience} as a ${candidate.headline.toLowerCase()}, based in ${candidate.location}. Applied ${candidate.appliedAgo.toLowerCase()} via ${candidate.source.toLowerCase()}.`,
+    resume: `${slugify(candidate.name)}-cv.pdf`,
+    links: [{ label: "LinkedIn", href: `linkedin.com/in/${slugify(candidate.name)}` }],
+    experience: [
+      {
+        role: candidate.headline,
+        company: "Current employer",
+        period: "Most recent",
+        detail: `Working with ${candidate.topSkills.join(", ")}.`,
+      },
+    ],
+    education: [{ school: "Not provided", qualification: "—", year: "—" }],
+    screening: [
+      { question: "Salary expectation", answer: candidate.expected },
+      { question: "Notice period", answer: candidate.noticePeriod },
+    ],
+    notes: [],
+    scorecards: [],
+    timeline: [
+      {
+        id: "tl-1",
+        label: "Applied",
+        detail: `${candidate.source} application`,
+        when: candidate.appliedAgo,
+      },
+      {
+        id: "tl-2",
+        label: `Moved to ${candidate.stage}`,
+        detail: "Current stage",
+        when: candidate.appliedAgo,
+      },
+    ],
+  };
+}
+
+export function allCandidateIds() {
+  return candidates.map((candidate) => candidate.id);
+}
+
+export type ScheduledInterview = RecruiterInterview & {
+  candidateId: string;
+  postingId: string;
+};
+
+export const schedule: ScheduledInterview[] = [
+  ...todaysInterviews.map((interview, index) => ({
+    ...interview,
+    candidateId: ["c-498", "c-489", "c-492", "c-495"][index],
+    postingId: ["p-0998", "p-1042", "p-1051", "p-1047"][index],
+  })),
+  {
+    id: "ri-5",
+    candidate: "Nadia Haddad",
+    initials: "NH",
+    avatarClass: "bg-rose-500/15 text-rose-600 dark:text-rose-300",
+    role: "Senior Frontend Engineer, Billing",
+    round: "Technical interview",
+    day: "Wed, 29 Jul",
+    time: "13:00 CEST",
+    duration: "90 min",
+    mode: "Video",
+    panel: ["Sven Aalbers"],
+    status: "Confirmed",
+    candidateId: "c-468",
+    postingId: "p-0998",
+  },
+  {
+    id: "ri-6",
+    candidate: "Elena Petrova",
+    initials: "EP",
+    avatarClass: "bg-indigo-600/15 text-indigo-600 dark:text-indigo-300",
+    role: "Data Platform Engineer",
+    round: "System design",
+    day: "Wed, 29 Jul",
+    time: "15:30 CEST",
+    duration: "60 min",
+    mode: "Video",
+    panel: ["Sven Aalbers", "Dara Okonkwo"],
+    status: "Confirmed",
+    candidateId: "c-456",
+    postingId: "p-1049",
+  },
+  {
+    id: "ri-7",
+    candidate: "Tom Berg",
+    initials: "TB",
+    avatarClass: "bg-emerald-600/15 text-emerald-700 dark:text-emerald-300",
+    role: "Backend Engineer, Ingest",
+    round: "Craft interview",
+    day: "Thu, 30 Jul",
+    time: "10:00 CEST",
+    duration: "60 min",
+    mode: "Video",
+    panel: ["Sven Aalbers"],
+    status: "Awaiting candidate",
+    candidateId: "c-447",
+    postingId: "p-1051",
+  },
+  {
+    id: "ri-8",
+    candidate: "Lena Fischer",
+    initials: "LF",
+    avatarClass: "bg-violet-600/15 text-violet-600 dark:text-violet-300",
+    role: "Product Designer",
+    round: "Portfolio review",
+    day: "Thu, 30 Jul",
+    time: "14:00 CEST",
+    duration: "45 min",
+    mode: "On-site",
+    panel: ["Lucia Ferrari"],
+    status: "Confirmed",
+    candidateId: "c-462",
+    postingId: "p-1047",
+  },
+  {
+    id: "ri-9",
+    candidate: "Sofia Almeida",
+    initials: "SA",
+    avatarClass: "bg-emerald-600/15 text-emerald-700 dark:text-emerald-300",
+    role: "Senior Frontend Engineer",
+    round: "Team and offer",
+    day: "Fri, 31 Jul",
+    time: "11:00 CEST",
+    duration: "45 min",
+    mode: "Video",
+    panel: ["Dara Okonkwo", "Lucia Ferrari"],
+    status: "Needs a panel",
+    candidateId: "c-474",
+    postingId: "p-1042",
+  },
+];
+
+export const scheduleDays = [
+  "Today",
+  "Tomorrow",
+  "Wed, 29 Jul",
+  "Thu, 30 Jul",
+  "Fri, 31 Jul",
+];
+
+export function scheduleByDay() {
+  return scheduleDays
+    .map((day) => ({
+      day,
+      sessions: schedule.filter((session) => session.day === day),
+    }))
+    .filter((group) => group.sessions.length > 0);
+}
+
+export type TalentProfile = {
+  id: string;
+  name: string;
+  initials: string;
+  avatarClass: string;
+  headline: string;
+  company: string;
+  location: string;
+  experience: string;
+  skills: string[];
+  openTo: boolean;
+  score: number;
+  lastActive: string;
+  contacted: boolean;
+};
+
+export const talentPool: TalentProfile[] = [
+  {
+    id: "tp-1",
+    name: "Anouk Visser",
+    initials: "AV",
+    avatarClass: "bg-teal-600/15 text-teal-700 dark:text-teal-300",
+    headline: "Staff Frontend Engineer",
+    company: "Adyen",
+    location: "Amsterdam, NL",
+    experience: "11 years",
+    skills: ["React", "TypeScript", "Design systems", "Accessibility"],
+    openTo: true,
+    score: 94,
+    lastActive: "Active this week",
+    contacted: false,
+  },
+  {
+    id: "tp-2",
+    name: "Bram de Wit",
+    initials: "BW",
+    avatarClass: "bg-indigo-600/15 text-indigo-600 dark:text-indigo-300",
+    headline: "Principal Engineer, Platform",
+    company: "Booking.com",
+    location: "Amsterdam, NL",
+    experience: "14 years",
+    skills: ["Monorepo", "CI/CD", "React", "Mentoring"],
+    openTo: false,
+    score: 89,
+    lastActive: "Active 3 weeks ago",
+    contacted: true,
+  },
+  {
+    id: "tp-3",
+    name: "Chiara Rossi",
+    initials: "CR",
+    avatarClass: "bg-rose-500/15 text-rose-600 dark:text-rose-300",
+    headline: "Design Engineer",
+    company: "Linear",
+    location: "Remote — IT",
+    experience: "7 years",
+    skills: ["React", "CSS", "Motion", "Figma"],
+    openTo: true,
+    score: 91,
+    lastActive: "Active today",
+    contacted: false,
+  },
+  {
+    id: "tp-4",
+    name: "Kofi Boateng",
+    initials: "KB",
+    avatarClass: "bg-amber-500/20 text-amber-700 dark:text-amber-300",
+    headline: "Senior Data Engineer",
+    company: "Miro",
+    location: "Berlin, DE",
+    experience: "9 years",
+    skills: ["Spark", "dbt", "Airflow", "Python"],
+    openTo: true,
+    score: 87,
+    lastActive: "Active this week",
+    contacted: false,
+  },
+  {
+    id: "tp-5",
+    name: "Saskia Mulder",
+    initials: "SM",
+    avatarClass: "bg-emerald-600/15 text-emerald-700 dark:text-emerald-300",
+    headline: "Engineering Manager",
+    company: "Mollie",
+    location: "Amsterdam, NL",
+    experience: "12 years",
+    skills: ["Leadership", "Hiring", "React", "Roadmapping"],
+    openTo: true,
+    score: 85,
+    lastActive: "Active 2 days ago",
+    contacted: false,
+  },
+  {
+    id: "tp-6",
+    name: "Victor Lindgren",
+    initials: "VL",
+    avatarClass: "bg-violet-600/15 text-violet-600 dark:text-violet-300",
+    headline: "Site Reliability Engineer",
+    company: "Klarna",
+    location: "Stockholm, SE",
+    experience: "8 years",
+    skills: ["Kubernetes", "Terraform", "Go", "Observability"],
+    openTo: false,
+    score: 82,
+    lastActive: "Active last month",
+    contacted: true,
+  },
+  {
+    id: "tp-7",
+    name: "Leila Nasser",
+    initials: "LN",
+    avatarClass: "bg-cyan-700/15 text-cyan-700 dark:text-cyan-300",
+    headline: "Product Designer",
+    company: "Framer",
+    location: "Remote — NL",
+    experience: "6 years",
+    skills: ["Figma", "Prototyping", "Design systems"],
+    openTo: true,
+    score: 88,
+    lastActive: "Active today",
+    contacted: false,
+  },
+  {
+    id: "tp-8",
+    name: "Hugo Martins",
+    initials: "HM",
+    avatarClass: "bg-slate-800/15 text-slate-700 dark:text-slate-300",
+    headline: "Developer Advocate",
+    company: "Vercel",
+    location: "Lisbon, PT",
+    experience: "8 years",
+    skills: ["DevRel", "Writing", "Next.js", "Video"],
+    openTo: true,
+    score: 90,
+    lastActive: "Active this week",
+    contacted: false,
+  },
+];
+
+export type MessageThread = {
+  id: string;
+  candidateId: string;
+  name: string;
+  initials: string;
+  avatarClass: string;
+  role: string;
+  preview: string;
+  when: string;
+  unread: boolean;
+  messages: {
+    id: string;
+    from: "them" | "us";
+    author: string;
+    body: string;
+    when: string;
+  }[];
+};
+
+export const threads: MessageThread[] = [
+  {
+    id: "th-1",
+    candidateId: "c-501",
+    name: "Priya Raman",
+    initials: "PR",
+    avatarClass: "bg-teal-600/15 text-teal-700 dark:text-teal-300",
+    role: "Senior Frontend Engineer",
+    preview: "Thursday afternoon works well for me — anything after 14:00.",
+    when: "18m ago",
+    unread: true,
+    messages: [
+      {
+        id: "m-1",
+        from: "us",
+        author: "Dara Okonkwo",
+        body: "Hi Priya — thanks for applying. Your token pipeline work is exactly the problem we have. Could we do a 30 minute intro this week?",
+        when: "1h ago",
+      },
+      {
+        id: "m-2",
+        from: "them",
+        author: "Priya Raman",
+        body: "Thursday afternoon works well for me — anything after 14:00.",
+        when: "18m ago",
+      },
+    ],
+  },
+  {
+    id: "th-2",
+    candidateId: "c-495",
+    name: "Amelie Dubois",
+    initials: "AD",
+    avatarClass: "bg-rose-500/15 text-rose-600 dark:text-rose-300",
+    role: "Product Designer",
+    preview: "Could I have until Thursday to give you an answer?",
+    when: "2h ago",
+    unread: true,
+    messages: [
+      {
+        id: "m-1",
+        from: "us",
+        author: "Dara Okonkwo",
+        body: "The offer letter is in your inbox. The team is thrilled. Let me know if anything in it needs a conversation.",
+        when: "3 days ago",
+      },
+      {
+        id: "m-2",
+        from: "them",
+        author: "Amelie Dubois",
+        body: "Could I have until Thursday to give you an answer? I want to talk it through at home first.",
+        when: "2h ago",
+      },
+    ],
+  },
+  {
+    id: "th-3",
+    candidateId: "c-498",
+    name: "Marek Nowak",
+    initials: "MN",
+    avatarClass: "bg-indigo-600/15 text-indigo-600 dark:text-indigo-300",
+    role: "Senior Frontend Engineer, Billing",
+    preview: "Confirmed for 11:00. Should I prepare anything?",
+    when: "4h ago",
+    unread: false,
+    messages: [
+      {
+        id: "m-1",
+        from: "us",
+        author: "Dara Okonkwo",
+        body: "Craft interview is booked for 11:00 with Sven and Lucia. Bring something you built and are still proud of.",
+        when: "5h ago",
+      },
+      {
+        id: "m-2",
+        from: "them",
+        author: "Marek Nowak",
+        body: "Confirmed for 11:00. Should I prepare anything?",
+        when: "4h ago",
+      },
+    ],
+  },
+  {
+    id: "th-4",
+    candidateId: "c-474",
+    name: "Sofia Almeida",
+    initials: "SA",
+    avatarClass: "bg-emerald-600/15 text-emerald-700 dark:text-emerald-300",
+    role: "Senior Frontend Engineer",
+    preview: "Two months notice, but I could start part-time sooner.",
+    when: "Yesterday",
+    unread: false,
+    messages: [
+      {
+        id: "m-1",
+        from: "us",
+        author: "Dara Okonkwo",
+        body: "We would like to move to a final conversation. What does your notice period look like?",
+        when: "2 days ago",
+      },
+      {
+        id: "m-2",
+        from: "them",
+        author: "Sofia Almeida",
+        body: "Two months notice, but I could start part-time sooner if that helps.",
+        when: "Yesterday",
+      },
+    ],
+  },
+];
+
+export const companyProfile = {
+  tagline: "Ship the thing, then write about why.",
+  about:
+    "Northwind Labs builds the observability layer that 4,000 engineering teams use to see what their services are doing in production. Engineers here own a surface end to end, from schema to pixel.",
+  website: "northwindlabs.com",
+  founded: "2018",
+  linkedin: "linkedin.com/company/northwind-labs",
+  benefits: [
+    "€2,500 yearly learning budget, no approval needed",
+    "4-day week in July and August",
+    "Home office setup up to €3,000",
+    "Relocation and visa support for you and your family",
+    "26 days holiday plus Dutch public holidays",
+  ],
+  offices: [
+    { city: "Amsterdam", people: "210 people" },
+    { city: "Remote, EU", people: "94 people" },
+  ],
+  values: [
+    {
+      title: "Write it down",
+      detail:
+        "Every non-trivial decision gets an RFC. Meetings start with ten minutes of reading.",
+    },
+    {
+      title: "One owner per surface",
+      detail:
+        "Shared ownership means nobody owns it. Each surface has a name attached.",
+    },
+  ],
+  profileStrength: 82,
+  profileGaps: [
+    { label: "Add three team photos", weight: "+7%" },
+    { label: "Record a 60-second culture video", weight: "+6%" },
+    { label: "Publish your salary bands", weight: "+5%" },
+  ],
+  metrics: [
+    { label: "Profile views", value: "8,420", hint: "last 30 days" },
+    { label: "Follower count", value: "1,204", hint: "+118 this month" },
+    { label: "Offer acceptance", value: "84%", hint: "2025 to date" },
+    { label: "Time to hire", value: "18 days", hint: "median, engineering" },
+  ],
+};
+
+export type Invite = {
+  id: string;
+  email: string;
+  role: "Admin" | "Recruiter" | "Interviewer";
+  sentAgo: string;
+};
+
+export const invites: Invite[] = [
+  { id: "in-1", email: "nienke.bos@northwindlabs.com", role: "Interviewer", sentAgo: "2 days ago" },
+  { id: "in-2", email: "omar.haddad@northwindlabs.com", role: "Recruiter", sentAgo: "5 days ago" },
+];
+
+export const teamRoles = {
+  "t-dara": "Admin" as const,
+  "t-sven": "Recruiter" as const,
+  "t-lucia": "Interviewer" as const,
+};
+
+export const notificationSettings = [
+  {
+    id: "new-applicant",
+    label: "New applicant",
+    detail: "Someone applies to a role you own",
+    email: true,
+    push: true,
+  },
+  {
+    id: "stage-change",
+    label: "Stage changes",
+    detail: "A teammate moves a candidate forward or rejects them",
+    email: true,
+    push: false,
+  },
+  {
+    id: "interview",
+    label: "Interview reminders",
+    detail: "One hour before a session you are on the panel for",
+    email: true,
+    push: true,
+  },
+  {
+    id: "digest",
+    label: "Weekly digest",
+    detail: "Monday summary of every pipeline you own",
+    email: true,
+    push: false,
+  },
+  {
+    id: "posting-health",
+    label: "Posting health",
+    detail: "A role is underperforming or about to expire",
+    email: false,
+    push: false,
+  },
+];
+
+export const billing = {
+  plan: "Scale",
+  price: "€490",
+  cycle: "per month, billed yearly",
+  renewsOn: "1 March 2027",
+  seatsUsed: 6,
+  seatsTotal: 10,
+  jobSlotsUsed: 7,
+  jobSlotsTotal: 15,
+  creditsLeft: 4,
+  creditsTotal: 25,
+  invoices: [
+    { id: "inv-1", number: "NW-2026-07", amount: "€490.00", date: "1 Jul 2026", status: "Paid" },
+    { id: "inv-2", number: "NW-2026-06", amount: "€490.00", date: "1 Jun 2026", status: "Paid" },
+    { id: "inv-3", number: "NW-2026-05", amount: "€490.00", date: "1 May 2026", status: "Paid" },
+  ],
+};
+
 export function postingTotals() {
   const open = openPostings();
   return {

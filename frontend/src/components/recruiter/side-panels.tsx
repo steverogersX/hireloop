@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   ArrowRight,
   CalendarPlus,
@@ -13,6 +14,7 @@ import {
   Video,
 } from "lucide-react";
 
+import { ActionButton } from "@/components/recruiter/action-button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +30,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import {
   employer,
+  postingHref,
   postingsNeedingAttention,
   recruiterActivity,
   sourceMix,
@@ -44,8 +47,15 @@ export function InterviewsCard() {
         <CardTitle>Interview schedule</CardTitle>
         <CardDescription>Today and tomorrow</CardDescription>
         <CardAction>
-          <Button variant="ghost" size="icon-sm" aria-label="Schedule interview">
-            <CalendarPlus />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Open the interview schedule"
+            asChild
+          >
+            <Link href="/recruiter/interviews">
+              <CalendarPlus />
+            </Link>
           </Button>
         </CardAction>
       </CardHeader>
@@ -98,10 +108,21 @@ export function InterviewsCard() {
                     Awaiting candidate
                   </Badge>
                 )}
-                <Button variant="ghost" size="xs" className="ml-auto">
+                <ActionButton
+                  variant="ghost"
+                  size="xs"
+                  className="ml-auto"
+                  message={`Reschedule request sent to ${interview.candidate}`}
+                >
                   Reschedule
-                </Button>
-                <Button size="xs">Scorecard</Button>
+                </ActionButton>
+                <ActionButton
+                  size="xs"
+                  message={`Scorecard opened for ${interview.round}`}
+                  description={`${interview.candidate} · ${interview.role}`}
+                >
+                  Scorecard
+                </ActionButton>
               </div>
             </div>
           );
@@ -124,9 +145,9 @@ export function NeedsAttentionCard() {
       </CardHeader>
       <CardContent className="grid gap-1">
         {roles.map((role) => (
-          <button
+          <Link
             key={role.id}
-            type="button"
+            href={postingHref(role)}
             className="flex w-full items-start gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
           >
             <Clock3 className="mt-0.5 size-4 shrink-0 text-chart-4" />
@@ -139,7 +160,7 @@ export function NeedsAttentionCard() {
               </span>
             </span>
             <ArrowRight className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-          </button>
+          </Link>
         ))}
       </CardContent>
     </Card>
@@ -186,9 +207,11 @@ export function SourceMixCard() {
             </li>
           ))}
         </ul>
-        <Button variant="outline" size="sm" className="w-full">
-          <Sparkles />
-          Source more candidates
+        <Button variant="outline" size="sm" className="w-full" asChild>
+          <Link href="/recruiter/search">
+            <Sparkles />
+            Source more candidates
+          </Link>
         </Button>
       </CardContent>
     </Card>
@@ -204,8 +227,15 @@ export function TeamCard() {
           {employer.seatsUsed} of {employer.seatsTotal} seats in use
         </CardDescription>
         <CardAction>
-          <Button variant="ghost" size="icon-sm" aria-label="Invite a teammate">
-            <UserPlus />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Invite a teammate"
+            asChild
+          >
+            <Link href="/recruiter/team">
+              <UserPlus />
+            </Link>
           </Button>
         </CardAction>
       </CardHeader>
@@ -270,8 +300,8 @@ export function ActivityCard() {
             </div>
           );
         })}
-        <Button variant="ghost" size="sm" className="w-full">
-          View all activity
+        <Button variant="ghost" size="sm" className="w-full" asChild>
+          <Link href="/recruiter/applicants">View all activity</Link>
         </Button>
       </CardContent>
     </Card>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   Ban,
@@ -38,6 +39,7 @@ import {
   formatBand,
   memberById,
   postingCounts,
+  postingHref,
   postings,
   statusTone,
   team,
@@ -56,7 +58,12 @@ const columns: ColumnDef<Posting>[] = [
       return (
         <div className="grid leading-tight">
           <span className="flex items-center gap-1.5 font-medium">
-            {posting.title}
+            <Link
+              href={postingHref(posting)}
+              className="rounded-sm hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            >
+              {posting.title}
+            </Link>
             {posting.unreviewed > 0 && (
               <Badge className="bg-chart-4/12 font-mono text-chart-4">
                 {posting.unreviewed} unread
@@ -177,9 +184,11 @@ const columns: ColumnDef<Posting>[] = [
       const posting = row.original;
       return (
         <div className="flex items-center justify-end gap-1.5">
-          <Button variant="outline" size="sm">
-            <Users />
-            Pipeline
+          <Button variant="outline" size="sm" asChild>
+            <Link href={postingHref(posting)}>
+              <Users />
+              Pipeline
+            </Link>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -192,9 +201,11 @@ const columns: ColumnDef<Posting>[] = [
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <PenLine />
-                Edit posting
+              <DropdownMenuItem asChild>
+                <Link href={postingHref(posting)}>
+                  <PenLine />
+                  Edit posting
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => toast(`${posting.title} duplicated as a draft`)}

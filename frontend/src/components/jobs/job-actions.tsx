@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bookmark, Check, Link2, Send, Share2, Zap } from "lucide-react";
+import { Bookmark, Check, Flag, Link2, Send, Share2, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 import { ApplyForm } from "@/components/jobs/apply-form";
@@ -120,6 +120,23 @@ export function ApplySheet({
         />
       </SheetContent>
     </Sheet>
+  );
+}
+
+export function ReportListingButton({ title }: { title: string }) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() =>
+        toast("Thanks — we will take a look", {
+          description: `Reported "${title}". Misleading listings get removed.`,
+        })
+      }
+    >
+      <Flag />
+      Report this listing
+    </Button>
   );
 }
 

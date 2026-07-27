@@ -71,7 +71,11 @@ export function CompanyCard({ entry }: { entry: DirectoryEntry }) {
             {openRoles} open {openRoles === 1 ? "role" : "roles"}
           </Badge>
           <div className="flex items-center gap-1.5">
-            <FollowButton companyName={company.name} size="sm" />
+            <FollowButton
+              companyId={company.id}
+              companyName={company.name}
+              size="sm"
+            />
             <Button variant="outline" size="sm" asChild>
               <Link href={companyHref(company)}>
                 View profile

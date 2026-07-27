@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Bell,
   Building2,
@@ -13,6 +14,7 @@ import {
   UserRoundCog,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { toast } from "sonner";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -53,9 +55,11 @@ export function RecruiterTopBar() {
       </div>
 
       <div className="ml-auto flex items-center gap-1.5">
-        <Button size="sm" className="hidden md:inline-flex">
-          <Plus />
-          Post a job
+        <Button size="sm" className="hidden md:inline-flex" asChild>
+          <Link href="/recruiter/jobs/new">
+            <Plus />
+            Post a job
+          </Link>
         </Button>
 
         <Button
@@ -72,10 +76,13 @@ export function RecruiterTopBar() {
           variant="ghost"
           size="icon-sm"
           className="relative"
-          aria-label="Notifications, 5 unread"
+          aria-label="Notifications, 2 unread"
+          asChild
         >
-          <Bell />
-          <span className="absolute top-1 right-1 size-1.5 rounded-full bg-chart-4 ring-2 ring-background" />
+          <Link href="/recruiter/messages">
+            <Bell />
+            <span className="absolute top-1 right-1 size-1.5 rounded-full bg-chart-4 ring-2 ring-background" />
+          </Link>
         </Button>
 
         <DropdownMenu>
@@ -104,25 +111,33 @@ export function RecruiterTopBar() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Building2 />
-                Company profile
+              <DropdownMenuItem asChild>
+                <Link href="/recruiter/company">
+                  <Building2 />
+                  Company profile
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <UserRoundCog />
-                Team and seats
+              <DropdownMenuItem asChild>
+                <Link href="/recruiter/team">
+                  <UserRoundCog />
+                  Team and seats
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Plan & billing
+              <DropdownMenuItem asChild>
+                <Link href="/recruiter/settings">
+                  <CreditCard />
+                  Plan & billing
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings />
-                Settings
+              <DropdownMenuItem asChild>
+                <Link href="/recruiter/settings">
+                  <Settings />
+                  Settings
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => toast("Signed out")}>
               <LogOut />
               Sign out
             </DropdownMenuItem>
