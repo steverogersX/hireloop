@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-import { ApplicationsTable } from "@/components/dashboard/applications-table";
+import { ApplicantsTable } from "@/components/recruiter/applicants-table";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,24 +11,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { pipeline } from "@/lib/mock-data";
+import { funnel, unreviewedTotal } from "@/lib/recruiter-mock-data";
 
-export function ApplicationsPanel() {
-  const total = pipeline.reduce((sum, step) => sum + step.count, 0);
+export function PipelinePanel() {
+  const total = funnel.reduce((sum, step) => sum + step.count, 0);
 
   return (
     <Card>
       <CardHeader className="border-b">
-        <CardTitle>Your pipeline</CardTitle>
+        <CardTitle>Hiring pipeline</CardTitle>
         <CardDescription>
-          34 applications since March · 1 offer waiting on you
+          {total} candidates across 7 open roles · {unreviewedTotal()} waiting on
+          a first read
         </CardDescription>
         <CardAction>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/applications">
-              All applications
-              <ArrowRight data-icon="inline-end" />
-            </Link>
+          <Button variant="outline" size="sm">
+            All applicants
+            <ArrowRight data-icon="inline-end" />
           </Button>
         </CardAction>
       </CardHeader>
@@ -37,7 +35,7 @@ export function ApplicationsPanel() {
       <CardContent className="grid gap-4">
         <div className="grid gap-2">
           <div className="flex h-2 gap-0.5 overflow-hidden rounded-full">
-            {pipeline.map((step) => (
+            {funnel.map((step) => (
               <span
                 key={step.stage}
                 className={cn("h-full rounded-full", step.tone)}
@@ -47,7 +45,7 @@ export function ApplicationsPanel() {
             ))}
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-1">
-            {pipeline.map((step) => (
+            {funnel.map((step) => (
               <span
                 key={step.stage}
                 className="inline-flex items-baseline gap-1.5 text-xs text-muted-foreground"
@@ -65,7 +63,7 @@ export function ApplicationsPanel() {
           </div>
         </div>
 
-        <ApplicationsTable />
+        <ApplicantsTable />
       </CardContent>
     </Card>
   );

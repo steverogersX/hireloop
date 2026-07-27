@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { Badge } from "@/components/ui/badge";
+import { StageBadge } from "@/components/applications/stage-badge";
 import {
   DataTable,
   DataTableColumnHeader,
@@ -18,14 +18,6 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { applications, type Application, type ApplicationStage } from "@/lib/mock-data";
-
-const stageTone: Record<ApplicationStage, string> = {
-  Applied: "bg-muted text-muted-foreground",
-  Screening: "bg-chart-3/12 text-chart-3",
-  Interview: "bg-chart-2/15 text-chart-2",
-  Offer: "bg-chart-5/12 text-chart-5",
-  Rejected: "bg-destructive/10 text-destructive",
-};
 
 const STAGES: ApplicationStage[] = [
   "Applied",
@@ -71,11 +63,7 @@ const columns: ColumnDef<Application>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Stage" />
     ),
-    cell: ({ row }) => (
-      <Badge className={stageTone[row.original.stage]}>
-        {row.original.stage}
-      </Badge>
-    ),
+    cell: ({ row }) => <StageBadge stage={row.original.stage} />,
     filterFn: (row, id, value: string) =>
       value === "all" || row.getValue(id) === value,
   },

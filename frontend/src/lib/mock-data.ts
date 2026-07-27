@@ -55,13 +55,18 @@ export type ApplicationStage =
 
 export type Application = {
   id: string;
+  jobId?: string;
   jobTitle: string;
   company: Company;
   stage: ApplicationStage;
   appliedOn: string;
+  appliedDaysAgo: number;
   lastUpdate: string;
   progress: number;
   nextStep: string;
+  location: string;
+  source: "Direct" | "Referral" | "Job alert" | "Recruiter";
+  salary: string;
 };
 
 export type Interview = {
@@ -201,7 +206,169 @@ export const candidate = {
     { label: "Confirm salary expectation", weight: "+7%" },
     { label: "Verify your last role", weight: "+7%" },
   ],
+  phone: "+31 6 12 34 56 78",
+  website: "priyaraman.dev",
+  github: "github.com/priyaraman",
+  linkedin: "linkedin.com/in/priyaraman",
+  bio: "Frontend engineer with eight years on design systems and data-heavy product UI. I like the unglamorous parts — token pipelines, migration paths, keyboard interaction — and I write things down so the next person does not have to guess.",
+  skills: [
+    "React",
+    "TypeScript",
+    "Design systems",
+    "Accessibility",
+    "Testing",
+    "Next.js",
+    "CSS architecture",
+    "Mentoring",
+  ],
+  languages: [
+    { name: "English", level: "Fluent" },
+    { name: "Dutch", level: "Conversational" },
+    { name: "Tamil", level: "Native" },
+  ],
 };
+
+export type Experience = {
+  id: string;
+  role: string;
+  company: string;
+  initials: string;
+  logoClass: string;
+  period: string;
+  duration: string;
+  location: string;
+  summary: string;
+  highlights: string[];
+  current: boolean;
+};
+
+export const experience: Experience[] = [
+  {
+    id: "e-1",
+    role: "Senior Frontend Engineer",
+    company: "Kestrel Software",
+    initials: "KS",
+    logoClass: "bg-sky-700 text-white",
+    period: "Mar 2022 — present",
+    duration: "3 yrs 5 mos",
+    location: "Amsterdam, NL · Hybrid",
+    summary:
+      "Own the design system behind four products and the migration path teams follow to adopt it.",
+    highlights: [
+      "Cut component duplication across four apps from 180 to 32 shared primitives.",
+      "Took keyboard and screen reader support to WCAG 2.2 AA on every shipped surface.",
+      "Mentored three engineers, two promoted to senior.",
+    ],
+    current: true,
+  },
+  {
+    id: "e-2",
+    role: "Frontend Engineer",
+    company: "Vellum Analytics",
+    initials: "VA",
+    logoClass: "bg-fuchsia-700 text-white",
+    period: "Jun 2019 — Feb 2022",
+    duration: "2 yrs 9 mos",
+    location: "Amsterdam, NL",
+    summary:
+      "Built the dashboard layer for a product analytics tool used by 900 teams.",
+    highlights: [
+      "Rebuilt the chart renderer, cutting time to interactive on large dashboards by 61%.",
+      "Introduced visual regression testing that caught 40+ layout breaks before release.",
+    ],
+    current: false,
+  },
+  {
+    id: "e-3",
+    role: "Junior Developer",
+    company: "Tidewater Studio",
+    initials: "TS",
+    logoClass: "bg-emerald-700 text-white",
+    period: "Aug 2017 — May 2019",
+    duration: "1 yr 10 mos",
+    location: "Chennai, IN",
+    summary:
+      "Agency work across a dozen client sites, mostly ecommerce front ends.",
+    highlights: [
+      "Shipped 14 client projects, four of which are still running unchanged.",
+    ],
+    current: false,
+  },
+];
+
+export type Education = {
+  id: string;
+  school: string;
+  degree: string;
+  period: string;
+  detail: string;
+};
+
+export const education: Education[] = [
+  {
+    id: "ed-1",
+    school: "University of Amsterdam",
+    degree: "MSc Information Studies, Human-Centered Multimedia",
+    period: "2015 — 2017",
+    detail: "Thesis on keyboard interaction models in data-dense interfaces.",
+  },
+  {
+    id: "ed-2",
+    school: "Anna University",
+    degree: "BE Computer Science and Engineering",
+    period: "2011 — 2015",
+    detail: "Graduated with distinction.",
+  },
+];
+
+export type ResumeFile = {
+  id: string;
+  name: string;
+  size: string;
+  updated: string;
+  usedIn: number;
+  isDefault: boolean;
+};
+
+export const resumeFiles: ResumeFile[] = [
+  {
+    id: "cv-1",
+    name: "priya-raman-frontend.pdf",
+    size: "284 KB",
+    updated: "4 days ago",
+    usedIn: 11,
+    isDefault: true,
+  },
+  {
+    id: "cv-2",
+    name: "priya-raman-platform.pdf",
+    size: "301 KB",
+    updated: "in June",
+    usedIn: 3,
+    isDefault: false,
+  },
+];
+
+export const profileVisibility = [
+  {
+    id: "searchable",
+    label: "Appear in recruiter search",
+    detail: "17 recruiters found you this month.",
+    enabled: true,
+  },
+  {
+    id: "current-employer",
+    label: "Hide from Kestrel Software",
+    detail: "Your current employer cannot see your profile.",
+    enabled: true,
+  },
+  {
+    id: "salary",
+    label: "Show salary expectation",
+    detail: "Only to companies whose range overlaps yours.",
+    enabled: false,
+  },
+];
 
 export const stats = [
   {
@@ -492,65 +659,244 @@ export const jobs: Job[] = [
 export const applications: Application[] = [
   {
     id: "a-51",
+    jobId: "j-1029",
     jobTitle: "Senior React Engineer",
     company: companies.tessera,
     stage: "Interview",
     appliedOn: "12 Jul",
+    appliedDaysAgo: 15,
     lastUpdate: "Moved to onsite loop · 2 days ago",
     progress: 70,
     nextStep: "System design round, Thu 14:00",
+    location: "Berlin, DE · Remote",
+    source: "Job alert",
+    salary: "€78k–96k",
   },
   {
     id: "a-48",
+    jobId: "j-0998",
     jobTitle: "Senior Frontend Engineer, Billing",
     company: companies.northwind,
     stage: "Screening",
     appliedOn: "9 Jul",
+    appliedDaysAgo: 18,
     lastUpdate: "Recruiter opened your profile · 5 hours ago",
     progress: 40,
     nextStep: "Waiting on recruiter call slot",
+    location: "Remote — Europe",
+    source: "Direct",
+    salary: "€80k–100k",
   },
   {
     id: "a-45",
+    jobId: "j-1031",
     jobTitle: "Frontend Platform Lead",
     company: companies.lumen,
     stage: "Screening",
     appliedOn: "7 Jul",
+    appliedDaysAgo: 20,
     lastUpdate: "Take-home sent · yesterday",
     progress: 45,
     nextStep: "Take-home due Monday",
+    location: "Copenhagen, DK",
+    source: "Recruiter",
+    salary: "€88k–112k",
+  },
+  {
+    id: "a-44",
+    jobTitle: "Senior Engineer, Design Systems",
+    company: companies.orbital,
+    stage: "Interview",
+    appliedOn: "5 Jul",
+    appliedDaysAgo: 22,
+    lastUpdate: "Panel scheduled · 3 days ago",
+    progress: 65,
+    nextStep: "Panel round, Tue 11:00",
+    location: "Rotterdam, NL",
+    source: "Referral",
+    salary: "€84k–104k",
   },
   {
     id: "a-40",
+    jobId: "j-1024",
     jobTitle: "Product Engineer, Growth",
     company: companies.brightmile,
     stage: "Applied",
     appliedOn: "3 Jul",
+    appliedDaysAgo: 24,
     lastUpdate: "No response yet · 24 days",
     progress: 15,
     nextStep: "Follow up with the hiring manager",
+    location: "Remote — EU/US",
+    source: "Job alert",
+    salary: "$70k–90k",
+  },
+  {
+    id: "a-39",
+    jobTitle: "Frontend Engineer, Patient Portal",
+    company: companies.cadence,
+    stage: "Applied",
+    appliedOn: "1 Jul",
+    appliedDaysAgo: 26,
+    lastUpdate: "Application viewed · 12 days ago",
+    progress: 20,
+    nextStep: "Nothing scheduled",
+    location: "Boston, MA",
+    source: "Direct",
+    salary: "$140k–165k",
   },
   {
     id: "a-36",
+    jobId: "j-1008",
     jobTitle: "Design Engineer",
     company: companies.paperkite,
     stage: "Offer",
     appliedOn: "22 Jun",
+    appliedDaysAgo: 35,
     lastUpdate: "Offer letter shared · 3 days ago",
     progress: 95,
     nextStep: "Respond by 31 Jul",
+    location: "Lisbon, PT",
+    source: "Referral",
+    salary: "€480–620 / day",
+  },
+  {
+    id: "a-34",
+    jobTitle: "Staff Engineer, Web Platform",
+    company: companies.tessera,
+    stage: "Screening",
+    appliedOn: "19 Jun",
+    appliedDaysAgo: 38,
+    lastUpdate: "Recruiter call booked · 4 days ago",
+    progress: 35,
+    nextStep: "Intro call, Wed 09:30",
+    location: "Remote — Europe",
+    source: "Recruiter",
+    salary: "€95k–115k",
+  },
+  {
+    id: "a-31",
+    jobTitle: "Senior Engineer, Grid Console",
+    company: companies.lumen,
+    stage: "Rejected",
+    appliedOn: "16 Jun",
+    appliedDaysAgo: 41,
+    lastUpdate: "Not moving forward · 2 weeks ago",
+    progress: 100,
+    nextStep: "Reapply after six months",
+    location: "Copenhagen, DK",
+    source: "Direct",
+    salary: "€82k–98k",
   },
   {
     id: "a-30",
+    jobId: "j-1013",
     jobTitle: "Frontend Engineer, Trading UI",
     company: companies.meridian,
     stage: "Rejected",
     appliedOn: "14 Jun",
+    appliedDaysAgo: 43,
     lastUpdate: "Closed — role paused · 1 week ago",
     progress: 100,
     nextStep: "Ask to be kept on file",
+    location: "London, UK",
+    source: "Job alert",
+    salary: "£90k–120k",
+  },
+  {
+    id: "a-27",
+    jobTitle: "Product Engineer",
+    company: companies.paperkite,
+    stage: "Rejected",
+    appliedOn: "8 Jun",
+    appliedDaysAgo: 49,
+    lastUpdate: "Filled internally · 3 weeks ago",
+    progress: 100,
+    nextStep: "Nothing to do",
+    location: "Remote — Europe",
+    source: "Direct",
+    salary: "€85k–105k",
+  },
+  {
+    id: "a-24",
+    jobTitle: "Engineering Manager, Web",
+    company: companies.orbital,
+    stage: "Applied",
+    appliedOn: "2 Jun",
+    appliedDaysAgo: 55,
+    lastUpdate: "No response yet · 55 days",
+    progress: 10,
+    nextStep: "Withdraw or follow up",
+    location: "Rotterdam, NL",
+    source: "Job alert",
+    salary: "€96k–128k",
+  },
+  {
+    id: "a-21",
+    jobTitle: "Senior Frontend Engineer",
+    company: companies.brightmile,
+    stage: "Rejected",
+    appliedOn: "27 May",
+    appliedDaysAgo: 61,
+    lastUpdate: "Rejected after screen · 6 weeks ago",
+    progress: 100,
+    nextStep: "Nothing to do",
+    location: "Remote — EU/US",
+    source: "Direct",
+    salary: "$95k–120k",
+  },
+  {
+    id: "a-18",
+    jobTitle: "Interface Engineer",
+    company: companies.northwind,
+    stage: "Rejected",
+    appliedOn: "19 May",
+    appliedDaysAgo: 69,
+    lastUpdate: "Rejected at final · 7 weeks ago",
+    progress: 100,
+    nextStep: "They asked to stay in touch",
+    location: "Amsterdam, NL",
+    source: "Referral",
+    salary: "€76k–94k",
   },
 ];
+
+export const applicationStages: ApplicationStage[] = [
+  "Applied",
+  "Screening",
+  "Interview",
+  "Offer",
+  "Rejected",
+];
+
+export const applicationInsights = [
+  {
+    label: "Response rate",
+    value: "62%",
+    hint: "9 of 14 got a reply",
+  },
+  {
+    label: "Median time to first reply",
+    value: "6 days",
+    hint: "across all applications",
+  },
+  {
+    label: "Interview conversion",
+    value: "21%",
+    hint: "3 of 14 reached interview",
+  },
+  {
+    label: "Needs your attention",
+    value: "4",
+    hint: "stale or awaiting action",
+  },
+];
+
+export function jobForApplication(application: Application) {
+  return application.jobId
+    ? (jobs.find((job) => job.id === application.jobId) ?? null)
+    : null;
+}
 
 export const interviews: Interview[] = [
   {
@@ -1254,11 +1600,421 @@ const jobDetails: Record<string, JobDetail> = {
   },
 };
 
+export type CompanyCulture = {
+  tagline: string;
+  values: { title: string; detail: string }[];
+  offices: { city: string; people: string }[];
+  ratings: { label: string; score: number }[];
+  metrics: { label: string; value: string; hint: string }[];
+  reviews: {
+    id: string;
+    title: string;
+    body: string;
+    author: string;
+    role: string;
+    rating: number;
+    when: string;
+  }[];
+};
+
+const companyCulture: Record<string, CompanyCulture> = {
+  "c-northwind": {
+    tagline: "Ship the thing, then write about why.",
+    values: [
+      {
+        title: "Write it down",
+        detail:
+          "Every non-trivial decision gets an RFC. Meetings start with ten minutes of reading.",
+      },
+      {
+        title: "One owner per surface",
+        detail:
+          "Shared ownership means nobody owns it. Each surface has a name attached.",
+      },
+    ],
+    offices: [
+      { city: "Amsterdam", people: "210 people" },
+      { city: "Remote, EU", people: "94 people" },
+    ],
+    ratings: [
+      { label: "Engineering culture", score: 92 },
+      { label: "Work-life balance", score: 88 },
+      { label: "Management", score: 84 },
+      { label: "Compensation", score: 79 },
+    ],
+    metrics: [
+      { label: "Headcount growth", value: "+38%", hint: "last 12 months" },
+      { label: "Median tenure", value: "3.1 yrs", hint: "engineering" },
+      { label: "Offer acceptance", value: "84%", hint: "2025 to date" },
+      { label: "Time to hire", value: "18 days", hint: "median, engineering" },
+    ],
+    reviews: [
+      {
+        id: "r-nw-1",
+        title: "The RFC culture is real, not decoration",
+        body: "I have shipped three things that started as a document someone disagreed with. Reviews are slow in the best way. The design system work is genuinely hard and genuinely valued.",
+        author: "Verified engineer",
+        role: "Senior Frontend Engineer",
+        rating: 5,
+        when: "2 months ago",
+      },
+      {
+        id: "r-nw-2",
+        title: "Strong team, compensation lags the market",
+        body: "Best colleagues I have had. The band tops out below what Berlin startups offer for the same level, and the equity is real but not lottery money. Going in with eyes open.",
+        author: "Verified engineer",
+        role: "Platform Engineer",
+        rating: 4,
+        when: "5 months ago",
+      },
+    ],
+  },
+  "c-paperkite": {
+    tagline: "Nine people, one canvas, shipped every Friday.",
+    values: [
+      {
+        title: "Taste is a requirement",
+        detail:
+          "Everyone here has an opinion about kerning and is expected to defend it.",
+      },
+      {
+        title: "No handoffs",
+        detail:
+          "Whoever picks up the work owns it from sketch to production and after.",
+      },
+    ],
+    offices: [
+      { city: "Lisbon", people: "5 people" },
+      { city: "Remote, EU", people: "4 people" },
+    ],
+    ratings: [
+      { label: "Engineering culture", score: 96 },
+      { label: "Work-life balance", score: 82 },
+      { label: "Management", score: 91 },
+      { label: "Compensation", score: 86 },
+    ],
+    metrics: [
+      { label: "Headcount growth", value: "+80%", hint: "5 to 9 this year" },
+      { label: "Median tenure", value: "1.8 yrs", hint: "company is young" },
+      { label: "Offer acceptance", value: "91%", hint: "small sample" },
+      { label: "Time to hire", value: "11 days", hint: "median" },
+    ],
+    reviews: [
+      {
+        id: "r-pk-1",
+        title: "Fastest I have ever shipped",
+        body: "Idea on Monday, in front of users on Friday. That cuts both ways — there is no one to catch your mistakes, and the on-call rotation is four people deep. Worth it for the craft.",
+        author: "Verified engineer",
+        role: "Product Engineer",
+        rating: 5,
+        when: "3 weeks ago",
+      },
+    ],
+  },
+  "c-lumen": {
+    tagline: "Software that keeps 2.3 GW balanced.",
+    values: [
+      {
+        title: "Consequences are physical",
+        detail:
+          "A bad deploy moves real megawatts. Testing discipline is not negotiable here.",
+      },
+      {
+        title: "Grow the people",
+        detail:
+          "Every lead is measured on who they promoted, not just what shipped.",
+      },
+    ],
+    offices: [
+      { city: "Copenhagen", people: "260 people" },
+      { city: "Hamburg", people: "70 people" },
+      { city: "Remote, EU", people: "40 people" },
+    ],
+    ratings: [
+      { label: "Engineering culture", score: 86 },
+      { label: "Work-life balance", score: 94 },
+      { label: "Management", score: 88 },
+      { label: "Compensation", score: 83 },
+    ],
+    metrics: [
+      { label: "Headcount growth", value: "+22%", hint: "last 12 months" },
+      { label: "Median tenure", value: "4.4 yrs", hint: "company-wide" },
+      { label: "Offer acceptance", value: "76%", hint: "relocation is a factor" },
+      { label: "Time to hire", value: "31 days", hint: "median, engineering" },
+    ],
+    reviews: [
+      {
+        id: "r-lg-1",
+        title: "Six weeks of leave and they mean it",
+        body: "Danish working culture is not a slogan on the careers page. The platform work is unglamorous and important. Interview process is long — budget a month.",
+        author: "Verified engineer",
+        role: "Platform Engineer",
+        rating: 4,
+        when: "6 weeks ago",
+      },
+    ],
+  },
+  "c-tessera": {
+    tagline: "Tools for the people who correct the models.",
+    values: [
+      {
+        title: "Your user sits two desks away",
+        detail:
+          "Researchers use what you ship the same week. Feedback arrives fast and blunt.",
+      },
+      {
+        title: "Latency is a feature",
+        detail:
+          "A dropped keystroke in an annotation loop costs someone an afternoon.",
+      },
+    ],
+    offices: [
+      { city: "Berlin", people: "48 people" },
+      { city: "Remote, EU", people: "37 people" },
+    ],
+    ratings: [
+      { label: "Engineering culture", score: 90 },
+      { label: "Work-life balance", score: 85 },
+      { label: "Management", score: 82 },
+      { label: "Compensation", score: 80 },
+    ],
+    metrics: [
+      { label: "Headcount growth", value: "+64%", hint: "last 12 months" },
+      { label: "Median tenure", value: "2.2 yrs", hint: "engineering" },
+      { label: "Offer acceptance", value: "88%", hint: "2025 to date" },
+      { label: "Time to hire", value: "14 days", hint: "median" },
+    ],
+    reviews: [
+      {
+        id: "r-ta-1",
+        title: "No algorithm puzzles, real problems instead",
+        body: "The interview was a live session on an actual streaming UI problem. Refreshing. Since joining, the same honesty holds — nobody pretends the roadmap is settled.",
+        author: "Verified engineer",
+        role: "Senior React Engineer",
+        rating: 5,
+        when: "1 month ago",
+      },
+    ],
+  },
+  "c-brightmile": {
+    tagline: "Nineteen cities, one activation funnel.",
+    values: [
+      {
+        title: "Ship the smallest test",
+        detail: "A result this week beats a perfect design next quarter.",
+      },
+      {
+        title: "Write up the losses",
+        detail: "Failed experiments get the same readout as the wins.",
+      },
+    ],
+    offices: [
+      { city: "Austin", people: "90 people" },
+      { city: "Remote, EU and US", people: "120 people" },
+    ],
+    ratings: [
+      { label: "Engineering culture", score: 80 },
+      { label: "Work-life balance", score: 86 },
+      { label: "Management", score: 74 },
+      { label: "Compensation", score: 78 },
+    ],
+    metrics: [
+      { label: "Headcount growth", value: "+15%", hint: "last 12 months" },
+      { label: "Median tenure", value: "2.6 yrs", hint: "company-wide" },
+      { label: "Offer acceptance", value: "71%", hint: "2025 to date" },
+      { label: "Time to hire", value: "22 days", hint: "median" },
+    ],
+    reviews: [],
+  },
+  "c-cadence": {
+    tagline: "1.2 million patients, one release gate.",
+    values: [
+      {
+        title: "Accessibility blocks release",
+        detail: "WCAG failures stop a ship the way a failing test does.",
+      },
+      {
+        title: "Clinicians in the room",
+        detail: "Care protocols are designed with the nurses who run them.",
+      },
+    ],
+    offices: [
+      { city: "Boston", people: "610 people" },
+      { city: "Remote, US", people: "240 people" },
+    ],
+    ratings: [
+      { label: "Engineering culture", score: 76 },
+      { label: "Work-life balance", score: 81 },
+      { label: "Management", score: 72 },
+      { label: "Compensation", score: 90 },
+    ],
+    metrics: [
+      { label: "Headcount growth", value: "+9%", hint: "last 12 months" },
+      { label: "Median tenure", value: "3.8 yrs", hint: "company-wide" },
+      { label: "Offer acceptance", value: "68%", hint: "hybrid is a factor" },
+      { label: "Time to hire", value: "42 days", hint: "committee review" },
+    ],
+    reviews: [],
+  },
+  "c-meridian": {
+    tagline: "Sixteen milliseconds, nine hours a day.",
+    values: [
+      {
+        title: "The desk decides",
+        detail: "Traders are the users and their stopwatch is the spec.",
+      },
+      {
+        title: "Measure before you argue",
+        detail: "Performance claims arrive with a profile attached.",
+      },
+    ],
+    offices: [
+      { city: "London", people: "3,400 people" },
+      { city: "Singapore", people: "900 people" },
+      { city: "New York", people: "1,100 people" },
+    ],
+    ratings: [
+      { label: "Engineering culture", score: 68 },
+      { label: "Work-life balance", score: 58 },
+      { label: "Management", score: 66 },
+      { label: "Compensation", score: 94 },
+    ],
+    metrics: [
+      { label: "Headcount growth", value: "+3%", hint: "last 12 months" },
+      { label: "Median tenure", value: "5.2 yrs", hint: "company-wide" },
+      { label: "Offer acceptance", value: "62%", hint: "five days on site" },
+      { label: "Time to hire", value: "38 days", hint: "median" },
+    ],
+    reviews: [],
+  },
+  "c-orbital": {
+    tagline: "Forty terminals depend on this schedule.",
+    values: [
+      {
+        title: "Operators over dashboards",
+        detail: "If a planner cannot use it at 3am, it is not finished.",
+      },
+      {
+        title: "Boring on purpose",
+        detail: "Stability beats novelty when ships are waiting.",
+      },
+    ],
+    offices: [
+      { city: "Rotterdam", people: "820 people" },
+      { city: "Antwerp", people: "260 people" },
+    ],
+    ratings: [
+      { label: "Engineering culture", score: 70 },
+      { label: "Work-life balance", score: 84 },
+      { label: "Management", score: 69 },
+      { label: "Compensation", score: 81 },
+    ],
+    metrics: [
+      { label: "Headcount growth", value: "+6%", hint: "last 12 months" },
+      { label: "Median tenure", value: "6.0 yrs", hint: "company-wide" },
+      { label: "Offer acceptance", value: "74%", hint: "2025 to date" },
+      { label: "Time to hire", value: "35 days", hint: "median" },
+    ],
+    reviews: [],
+  },
+};
+
 function slugify(value: string) {
   return value
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+}
+
+export function companySlug(company: Company) {
+  return slugify(company.name);
+}
+
+export function companyHref(company: Company) {
+  return `/companies/${companySlug(company)}`;
+}
+
+export function jobsAtCompany(companyId: string) {
+  return jobs.filter((job) => job.company.id === companyId);
+}
+
+export function getCompanyBySlug(slug: string) {
+  const company = jobs.find((job) => companySlug(job.company) === slug)?.company;
+  if (!company) return null;
+
+  const openRoles = jobsAtCompany(company.id);
+
+  return {
+    company,
+    profile: companyProfiles[company.id],
+    culture: companyCulture[company.id],
+    openRoles,
+    techStack: [...new Set(openRoles.flatMap((job) => job.skills))],
+  };
+}
+
+export const sizeBands = ["1–100", "100–500", "500–5,000", "5,000+"] as const;
+
+export function sizeBand(company: Company) {
+  const leading = Number(company.size.replace(/,/g, "").match(/\d+/)?.[0] ?? 0);
+  if (leading >= 5000) return sizeBands[3];
+  if (leading >= 500) return sizeBands[2];
+  if (leading >= 100) return sizeBands[1];
+  return sizeBands[0];
+}
+
+export function companyDirectory() {
+  return [...new Set(jobs.map((job) => job.company))]
+    .map((company) => {
+      const openRoles = jobsAtCompany(company.id);
+      return {
+        company,
+        profile: companyProfiles[company.id],
+        culture: companyCulture[company.id],
+        openRoles: openRoles.length,
+        topSkills: [...new Set(openRoles.flatMap((job) => job.skills))].slice(
+          0,
+          4
+        ),
+        bestMatch: Math.max(...openRoles.map((job) => job.matchScore)),
+        band: sizeBand(company),
+      };
+    })
+    .sort((a, b) => b.openRoles - a.openRoles);
+}
+
+export type DirectoryEntry = ReturnType<typeof companyDirectory>[number];
+
+export function industryFacets() {
+  const counts = [...new Set(jobs.map((job) => job.company))].reduce<
+    Record<string, number>
+  >((acc, company) => {
+    acc[company.industry] = (acc[company.industry] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([industry, count]) => ({ industry, count }));
+}
+
+export function allCompanySlugs() {
+  return [...new Set(jobs.map((job) => companySlug(job.company)))];
+}
+
+export function similarCompanies(company: Company, limit = 3) {
+  return [...new Set(jobs.map((job) => job.company))]
+    .filter((item) => item.id !== company.id)
+    .map((item) => ({
+      item,
+      affinity:
+        (item.industry === company.industry ? 40 : 0) +
+        (item.funding === company.funding ? 15 : 0) +
+        item.rating * 4,
+    }))
+    .sort((a, b) => b.affinity - a.affinity)
+    .slice(0, limit)
+    .map((entry) => entry.item);
 }
 
 export function jobSlug(job: Job) {

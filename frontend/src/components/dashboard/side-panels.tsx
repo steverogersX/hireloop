@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   ArrowRight,
   Bell,
@@ -66,8 +67,8 @@ export function ProfileStrengthCard() {
           ))}
         </ul>
 
-        <Button variant="outline" size="sm" className="w-full">
-          Finish profile
+        <Button variant="outline" size="sm" className="w-full" asChild>
+          <Link href="/profile">Finish profile</Link>
         </Button>
       </CardContent>
     </Card>

@@ -49,13 +49,13 @@ const searchNav: NavItem[] = [
   { title: "Find jobs", icon: Search, badge: "128", href: "/jobs" },
   { title: "Saved jobs", icon: Bookmark, badge: "9" },
   { title: "Job alerts", icon: Bell, badge: "16" },
-  { title: "Companies", icon: Building2 },
+  { title: "Companies", icon: Building2, href: "/companies" },
 ];
 
 const trackNav: NavItem[] = [
   { title: "Applications", icon: FileText, badge: "34" },
   { title: "Messages", icon: MessagesSquare, badge: "3" },
-  { title: "Profile & resume", icon: CircleUser },
+  { title: "Profile & resume", icon: CircleUser, href: "/profile" },
 ];
 
 function isCurrent(pathname: string, href?: string) {
@@ -93,51 +93,14 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Search</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {searchNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild={Boolean(item.href)}
-                    isActive={isCurrent(pathname, item.href)}
-                    tooltip={item.title}
-                  >
-                    {item.href ? (
-                      <Link href={item.href}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    ) : (
-                      <>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </>
-                    )}
-                  </SidebarMenuButton>
-                  {item.badge && (
-                    <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
-                  )}
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            <NavList items={searchNav} pathname={pathname} />
           </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarGroup>
           <SidebarGroupLabel>Track</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {trackNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton tooltip={item.title}>
-                    <item.icon />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                  {item.badge && (
-                    <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
-                  )}
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            <NavList items={trackNav} pathname={pathname} />
           </SidebarGroupContent>
         </SidebarGroup>
 
@@ -205,6 +168,41 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+function NavList({
+  items,
+  pathname,
+}: {
+  items: NavItem[];
+  pathname: string;
+}) {
+  return (
+    <SidebarMenu>
+      {items.map((item) => (
+        <SidebarMenuItem key={item.title}>
+          <SidebarMenuButton
+            asChild={Boolean(item.href)}
+            isActive={isCurrent(pathname, item.href)}
+            tooltip={item.title}
+          >
+            {item.href ? (
+              <Link href={item.href}>
+                <item.icon />
+                <span>{item.title}</span>
+              </Link>
+            ) : (
+              <>
+                <item.icon />
+                <span>{item.title}</span>
+              </>
+            )}
+          </SidebarMenuButton>
+          {item.badge && <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>}
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
   );
 }
 
