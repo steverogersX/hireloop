@@ -35,7 +35,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { formatSalary, jobHref, type Job } from "@/lib/mock-data";
+import { companyHref, formatSalary, jobHref, type Job } from "@/lib/mock-data";
 
 export function JobCard({ job }: { job: Job }) {
   const [saved, setSaved] = useState(job.saved);
@@ -78,10 +78,13 @@ export function JobCard({ job }: { job: Job }) {
               )}
             </div>
             <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1 font-medium text-foreground">
+              <Link
+                href={companyHref(job.company)}
+                className="inline-flex items-center gap-1 rounded-sm font-medium text-foreground hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              >
                 <Building2 className="size-3.5" />
                 {job.company.name}
-              </span>
+              </Link>
               <span className="inline-flex items-center gap-1">
                 <MapPin className="size-3.5" />
                 {job.location}
@@ -166,9 +169,11 @@ export function JobCard({ job }: { job: Job }) {
                   <Share2 />
                   Share this role
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Building2 />
-                  View company
+                <DropdownMenuItem asChild>
+                  <Link href={companyHref(job.company)}>
+                    <Building2 />
+                    View company
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>

@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { HiringProcess } from "@/components/companies/hiring-process";
 import { JobActions, StickyApplyBar } from "@/components/jobs/job-actions";
 import { MatchRing } from "@/components/dashboard/match-ring";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -39,12 +40,17 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import {
   allJobSlugs,
+  companyHref,
   formatSalary,
   getJobBySlug,
   jobHref,
   similarJobs,
 } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+
+// Every role is prerendered, so an unlisted slug is a real 404. Without this
+// the loading shell streams first and the response is stuck at 200.
+export const dynamicParams = false;
 
 export function generateStaticParams() {
   return allJobSlugs().map((slug) => ({ slug }));
@@ -115,10 +121,13 @@ export default async function JobPage(props: PageProps<"/jobs/[slug]">) {
                 )}
               </div>
               <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+                <Link
+                  href={companyHref(job.company)}
+                  className="inline-flex items-center gap-1.5 rounded-sm font-medium text-foreground hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                >
                   <Building2 className="size-4" />
                   {job.company.name}
-                </span>
+                </Link>
                 <span className="inline-flex items-center gap-1.5">
                   <MapPin className="size-4" />
                   {job.location} · {job.workplace}
@@ -210,31 +219,7 @@ export default async function JobPage(props: PageProps<"/jobs/[slug]">) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ol className="grid gap-4">
-                {company.process.map((step, index) => (
-                  <li key={step.step} className="flex gap-3">
-                    <div className="flex flex-col items-center">
-                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-xs font-medium text-primary tabular-nums">
-                        {index + 1}
-                      </span>
-                      {index < company.process.length - 1 && (
-                        <span className="mt-1 w-px flex-1 bg-border" />
-                      )}
-                    </div>
-                    <div className="pb-1">
-                      <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
-                        {step.step}
-                        <span className="font-mono text-xs font-normal text-muted-foreground">
-                          {step.duration}
-                        </span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {step.detail}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
+              <HiringProcess steps={company.process} />
             </CardContent>
           </Card>
 
@@ -366,13 +351,21 @@ export default async function JobPage(props: PageProps<"/jobs/[slug]">) {
               <Separator />
 
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" className="flex-1">
-                  <Globe />
-                  {company.website}
+                <Button variant="outline" size="sm" className="flex-1" asChild>
+                  <a
+                    href={`https://${company.website}`}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                  >
+                    <Globe />
+                    {company.website}
+                  </a>
                 </Button>
-                <Button variant="ghost" size="sm">
-                  {company.openRoles} open roles
-                  <ArrowUpRight data-icon="inline-end" />
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href={companyHref(job.company)}>
+                    View profile
+                    <ArrowUpRight data-icon="inline-end" />
+                  </Link>
                 </Button>
               </div>
             </CardContent>
