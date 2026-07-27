@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight, Building2, Plus } from "lucide-react";
 
+import { ActionButton } from "@/components/recruiter/action-button";
 import { CompanyForm } from "@/components/recruiter/company-form";
 import { MatchRing } from "@/components/dashboard/match-ring";
 import {
@@ -104,16 +105,18 @@ export default function CompanyProfilePage() {
               <ul className="grid gap-1.5">
                 {companyProfile.profileGaps.map((gap) => (
                   <li key={gap.label}>
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                    <ActionButton
+                      variant="ghost"
+                      className="h-auto w-full justify-start px-2 py-1.5 font-normal"
+                      message={gap.label}
+                      description={`Completing this lifts your profile strength by ${gap.weight}.`}
                     >
                       <Plus className="size-3.5 text-muted-foreground" />
-                      <span className="flex-1">{gap.label}</span>
+                      <span className="flex-1 text-left">{gap.label}</span>
                       <span className="font-mono text-xs text-chart-5">
                         {gap.weight}
                       </span>
-                    </button>
+                    </ActionButton>
                   </li>
                 ))}
               </ul>
@@ -158,10 +161,16 @@ export default function CompanyProfilePage() {
                   </span>
                 </div>
               ))}
-              <Button variant="outline" size="sm" className="mt-1 w-full">
+              <ActionButton
+                variant="outline"
+                size="sm"
+                className="mt-1 w-full"
+                message="Add an office"
+                description="Offices appear on your public profile and postings."
+              >
                 <Plus />
                 Add an office
-              </Button>
+              </ActionButton>
             </CardContent>
           </Card>
         </aside>

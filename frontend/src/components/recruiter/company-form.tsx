@@ -367,7 +367,17 @@ export function CompanyForm() {
               <p className="text-sm text-muted-foreground">{value.detail}</p>
             </div>
           ))}
-          <Button type="button" variant="outline" size="sm" className="w-fit">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit"
+            onClick={() =>
+              toast("Add a value", {
+                description: "Values show on your profile under the about section.",
+              })
+            }
+          >
             <Plus />
             Add a value
           </Button>

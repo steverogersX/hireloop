@@ -140,7 +140,15 @@ export function TalentSearch() {
               aria-label="Location"
             />
           </div>
-          <Button className="sm:w-32">
+          <Button
+            className="sm:w-32"
+            onClick={() =>
+              toast(
+                `${results.length} ${results.length === 1 ? "profile" : "profiles"} match`,
+                { description: "Results update as you type." }
+              )
+            }
+          >
             <Search />
             Search
           </Button>
@@ -383,7 +391,15 @@ export function TalentSearch() {
                     <MatchRing score={profile.score} label="fit" />
 
                     <div className="flex w-full items-center justify-end gap-1.5 border-t pt-3 sm:w-auto sm:border-0 sm:pt-0">
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          toast(`${profile.name} · ${profile.headline}`, {
+                            description: `${profile.experience} at ${profile.company}. ${profile.lastActive}.`,
+                          })
+                        }
+                      >
                         View profile
                       </Button>
                       <Button

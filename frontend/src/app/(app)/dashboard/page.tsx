@@ -39,9 +39,11 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline">
-            <SlidersHorizontal />
-            Job preferences
+          <Button variant="outline" asChild>
+            <Link href="/profile">
+              <SlidersHorizontal />
+              Job preferences
+            </Link>
           </Button>
           <Button asChild>
             <Link href="/jobs">

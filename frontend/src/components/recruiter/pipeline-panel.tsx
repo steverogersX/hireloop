@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { ApplicantsTable } from "@/components/recruiter/applicants-table";
@@ -25,9 +26,11 @@ export function PipelinePanel() {
           a first read
         </CardDescription>
         <CardAction>
-          <Button variant="outline" size="sm">
-            All applicants
-            <ArrowRight data-icon="inline-end" />
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/recruiter/applicants">
+              All applicants
+              <ArrowRight data-icon="inline-end" />
+            </Link>
           </Button>
         </CardAction>
       </CardHeader>

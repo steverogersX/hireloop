@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Download, UserSearch } from "lucide-react";
 
+import { ActionButton } from "@/components/recruiter/action-button";
 import { CandidateRows } from "@/components/recruiter/candidate-rows";
 import {
   Breadcrumb,
@@ -67,10 +68,15 @@ export default function ApplicantsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline">
+          <ActionButton
+            variant="outline"
+            tone="success"
+            message="Export started"
+            description={`${candidates.length} applicants will arrive by email.`}
+          >
             <Download />
             Export CSV
-          </Button>
+          </ActionButton>
           <Button asChild>
             <Link href="/recruiter/search">
               <UserSearch />

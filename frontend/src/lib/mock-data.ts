@@ -7,6 +7,22 @@ export type Workplace = "Remote" | "Hybrid" | "On-site";
 export type Employment = "Full-time" | "Contract" | "Part-time" | "Internship";
 export type Seniority = "Junior" | "Mid" | "Senior" | "Staff" | "Lead";
 
+export const WORKPLACES: Workplace[] = ["Remote", "Hybrid", "On-site"];
+export const EMPLOYMENT_TYPES: Employment[] = [
+  "Full-time",
+  "Contract",
+  "Part-time",
+  "Internship",
+];
+export const SENIORITIES: Seniority[] = [
+  "Junior",
+  "Mid",
+  "Senior",
+  "Staff",
+  "Lead",
+];
+export const SALARY_FLOORS = [60000, 80000, 100000, 120000];
+
 export type Company = {
   id: string;
   name: string;

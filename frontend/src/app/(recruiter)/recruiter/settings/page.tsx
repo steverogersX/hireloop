@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CreditCard, Download, LogOut, Trash2 } from "lucide-react";
 
+import { AccountForm } from "@/components/recruiter/account-form";
+import { ActionButton } from "@/components/recruiter/action-button";
 import { NotificationSettings } from "@/components/recruiter/notification-settings";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -110,9 +112,14 @@ export default function SettingsPage() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid gap-1.5">
-                    <Button variant="outline" size="sm">
+                    <ActionButton
+                      variant="outline"
+                      size="sm"
+                      message="Choose a photo"
+                      description="Square JPG or PNG, at least 200×200."
+                    >
                       Upload a photo
-                    </Button>
+                    </ActionButton>
                     <p className="text-xs text-muted-foreground">
                       Square JPG or PNG, at least 200×200
                     </p>
@@ -121,28 +128,7 @@ export default function SettingsPage() {
 
                 <Separator />
 
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <div className="grid gap-2">
-                    <Label htmlFor="settings-name">Full name</Label>
-                    <Input id="settings-name" defaultValue={recruiter.name} />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="settings-title">Job title</Label>
-                    <Input id="settings-title" defaultValue={recruiter.title} />
-                  </div>
-                  <div className="grid gap-2 sm:col-span-2">
-                    <Label htmlFor="settings-email">Work email</Label>
-                    <Input
-                      id="settings-email"
-                      type="email"
-                      defaultValue={recruiter.email}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <Button>Save changes</Button>
-                </div>
+                <AccountForm />
               </CardContent>
             </Card>
 
@@ -161,9 +147,15 @@ export default function SettingsPage() {
                       Last changed 4 months ago
                     </p>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <ActionButton
+                    variant="outline"
+                    size="sm"
+                    message="Password reset sent"
+                    description={`Check ${recruiter.email} for the link.`}
+                    tone="success"
+                  >
                     Change password
-                  </Button>
+                  </ActionButton>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 rounded-lg border p-3">
                   <div className="min-w-40 flex-1">
@@ -210,10 +202,15 @@ export default function SettingsPage() {
                       days.
                     </p>
                   </div>
-                  <Button variant="destructive" size="sm">
+                  <ActionButton
+                    variant="destructive"
+                    size="sm"
+                    message="Deleting a workspace needs an owner"
+                    description="Contact support to start the process."
+                  >
                     <Trash2 />
                     Delete workspace
-                  </Button>
+                  </ActionButton>
                 </div>
               </CardContent>
             </Card>
@@ -262,11 +259,20 @@ export default function SettingsPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline">
+                    <ActionButton
+                      variant="outline"
+                      message="Payment method"
+                      description="Visa ending 4242, expires 09/28."
+                    >
                       <CreditCard />
                       Payment method
-                    </Button>
-                    <Button>Change plan</Button>
+                    </ActionButton>
+                    <ActionButton
+                      message="Compare plans"
+                      description={`You are on ${billing.plan} at ${billing.price} ${billing.cycle}.`}
+                    >
+                      Change plan
+                    </ActionButton>
                   </div>
                 </div>
 
@@ -316,13 +322,15 @@ export default function SettingsPage() {
                     <span className="ml-auto font-mono text-sm tabular-nums">
                       {invoice.amount}
                     </span>
-                    <Button
+                    <ActionButton
                       variant="ghost"
                       size="icon-sm"
                       aria-label={`Download invoice ${invoice.number}`}
+                      message={`Downloading ${invoice.number}`}
+                      description={`${invoice.amount} · ${invoice.date}`}
                     >
                       <Download />
-                    </Button>
+                    </ActionButton>
                   </div>
                 ))}
               </CardContent>

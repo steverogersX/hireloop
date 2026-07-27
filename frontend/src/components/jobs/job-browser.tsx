@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   BellPlus,
   LayoutList,
@@ -129,10 +129,12 @@ const sorters: Record<string, (a: Job, b: Job) => number> = {
 };
 
 export function JobBrowser() {
-  const initialQuery = useSearchParams().get("q") ?? "";
+  const router = useRouter();
+  const params = useSearchParams();
   const [filters, setFilters] = useState<Filters>({
     ...EMPTY,
-    query: initialQuery,
+    query: params.get("q") ?? "",
+    where: params.get("where") ?? "",
   });
   const [sort, setSort] = useState("match");
   const [view, setView] = useState("list");
@@ -217,7 +219,18 @@ export function JobBrowser() {
               aria-label="Location"
             />
           </div>
-          <Button className="sm:w-32">
+          <Button
+            className="sm:w-32"
+            onClick={() => {
+              const params = new URLSearchParams();
+              if (filters.query) params.set("q", filters.query);
+              if (filters.where) params.set("where", filters.where);
+              router.replace(params.size ? `/jobs?${params}` : "/jobs", {
+                scroll: false,
+              });
+              toast(`${results.length} roles match`);
+            }}
+          >
             <Search />
             Search
           </Button>

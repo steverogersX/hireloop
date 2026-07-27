@@ -9,6 +9,7 @@ import {
   Video,
 } from "lucide-react";
 
+import { ActionButton } from "@/components/recruiter/action-button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -82,10 +83,14 @@ export default function InterviewsPage() {
           </p>
         </div>
 
-        <Button>
+        <ActionButton
+          tone="success"
+          message="Scheduler opened"
+          description="Pick a candidate and a panel to book a session."
+        >
           <CalendarPlus />
           Schedule interview
-        </Button>
+        </ActionButton>
       </header>
 
       <div className="grid gap-4">
@@ -169,12 +174,21 @@ export default function InterviewsPage() {
                       )}
 
                       <div className="ml-auto flex items-center gap-1.5">
-                        <Button variant="ghost" size="sm">
+                        <ActionButton
+                          variant="ghost"
+                          size="sm"
+                          message={`Reschedule request sent to ${session.candidate}`}
+                        >
                           Reschedule
-                        </Button>
-                        <Button variant="outline" size="sm">
+                        </ActionButton>
+                        <ActionButton
+                          variant="outline"
+                          size="sm"
+                          message={`Scorecard opened for ${session.round}`}
+                          description={`${session.candidate} · ${session.role}`}
+                        >
                           Scorecard
-                        </Button>
+                        </ActionButton>
                       </div>
                     </CardContent>
                   </Card>

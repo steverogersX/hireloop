@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CircleAlert, Plus, Upload } from "lucide-react";
 
+import { ActionButton } from "@/components/recruiter/action-button";
 import { PostingsBoard } from "@/components/recruiter/postings-board";
 import {
   Breadcrumb,
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   postingCounts,
+  postingHref,
   postingsNeedingAttention,
   postingTotals,
   unreviewedTotal,
@@ -77,10 +79,14 @@ export default function RecruiterJobsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline">
+          <ActionButton
+            variant="outline"
+            message="ATS import started"
+            description="We will email you when your postings finish syncing."
+          >
             <Upload />
             Import from ATS
-          </Button>
+          </ActionButton>
           <Button asChild>
             <Link href="/recruiter/jobs/new">
               <Plus />
@@ -110,17 +116,25 @@ export default function RecruiterJobsPage() {
         <Card size="sm">
           <CardContent className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <CircleAlert className="size-4 shrink-0 text-chart-4" />
-            <p className="min-w-0 flex-1 text-sm">
+            <p className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 text-sm">
               <span className="font-medium">
                 {stuck.length} postings need a decision
               </span>
-              <span className="text-muted-foreground">
-                {" · "}
-                {stuck.map((posting) => posting.title).join(", ")}
-              </span>
+              <span className="text-muted-foreground">·</span>
+              {stuck.map((posting, index) => (
+                <span key={posting.id} className="text-muted-foreground">
+                  <Link
+                    href={postingHref(posting)}
+                    className="rounded-sm hover:text-foreground hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                  >
+                    {posting.title}
+                  </Link>
+                  {index < stuck.length - 1 && ","}
+                </span>
+              ))}
             </p>
-            <Button variant="outline" size="sm">
-              Review them
+            <Button variant="outline" size="sm" asChild>
+              <Link href={postingHref(stuck[0])}>Review them</Link>
             </Button>
           </CardContent>
         </Card>

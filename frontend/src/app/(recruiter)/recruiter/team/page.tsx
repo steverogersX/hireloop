@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock3, Mail, MoreHorizontal, Users } from "lucide-react";
 
+import { ActionButton } from "@/components/recruiter/action-button";
 import { InviteDialog } from "@/components/recruiter/invite-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,13 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { billing, invites, team, teamRoles } from "@/lib/recruiter-mock-data";
+import {
+  billing,
+  employer,
+  invites,
+  team,
+  teamRoles,
+} from "@/lib/recruiter-mock-data";
 
 export const metadata: Metadata = {
   title: "Team — HireLoop",
@@ -139,14 +146,16 @@ export default function TeamPage() {
                       </span>
                     </div>
 
-                    <Button
+                    <ActionButton
                       variant="ghost"
                       size="icon-sm"
                       aria-label={`Manage ${member.name}`}
                       className="ml-auto"
+                      message={`Manage ${member.name}`}
+                      description={`Change their role or remove them from ${employer.name}.`}
                     >
                       <MoreHorizontal />
-                    </Button>
+                    </ActionButton>
                   </div>
                 </div>
               ))}
@@ -183,12 +192,23 @@ export default function TeamPage() {
                       Sent {invite.sentAgo}
                     </span>
                     <div className="ml-auto flex items-center gap-1.5">
-                      <Button variant="ghost" size="sm">
+                      <ActionButton
+                        variant="ghost"
+                        size="sm"
+                        tone="success"
+                        message="Invite resent"
+                        description={`A new link is on its way to ${invite.email}.`}
+                      >
                         Resend
-                      </Button>
-                      <Button variant="ghost" size="sm">
+                      </ActionButton>
+                      <ActionButton
+                        variant="ghost"
+                        size="sm"
+                        message="Invite revoked"
+                        description={`${invite.email} can no longer join.`}
+                      >
                         Revoke
-                      </Button>
+                      </ActionButton>
                     </div>
                   </div>
                 ))

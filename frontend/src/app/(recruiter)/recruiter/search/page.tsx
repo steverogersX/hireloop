@@ -50,9 +50,11 @@ export default function TalentSearchPage() {
           </p>
         </div>
 
-        <Button variant="outline">
-          <Sparkles />
-          Top up credits
+        <Button variant="outline" asChild>
+          <Link href="/recruiter/settings">
+            <Sparkles />
+            Top up credits
+          </Link>
         </Button>
       </header>
 

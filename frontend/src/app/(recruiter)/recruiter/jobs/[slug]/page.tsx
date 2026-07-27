@@ -1,18 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  Ban,
-  Check,
-  Copy,
-  Eye,
-  Link2,
-  MapPin,
-  PenLine,
-  Users,
-} from "lucide-react";
+import { MapPin, Users } from "lucide-react";
 
 import { HiringProcess } from "@/components/companies/hiring-process";
 import { PipelineBoard } from "@/components/recruiter/pipeline-board";
+import { PostingActions } from "@/components/recruiter/posting-actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -125,36 +117,7 @@ export default async function PostingPage(
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline">
-                <Link2 />
-                Copy link
-              </Button>
-              <Button variant="outline">
-                <Copy />
-                Duplicate
-              </Button>
-              {posting.status === "Published" ? (
-                <Button variant="outline">
-                  <Ban />
-                  Close
-                </Button>
-              ) : posting.status === "Draft" ? (
-                <Button variant="outline">
-                  <Check />
-                  Publish
-                </Button>
-              ) : (
-                <Button variant="outline">
-                  <Eye />
-                  Reopen
-                </Button>
-              )}
-              <Button>
-                <PenLine />
-                Edit posting
-              </Button>
-            </div>
+            <PostingActions posting={posting} />
           </div>
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-y py-3">

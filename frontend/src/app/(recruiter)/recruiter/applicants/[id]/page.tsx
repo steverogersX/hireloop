@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { MatchRing } from "@/components/dashboard/match-ring";
+import { ActionButton } from "@/components/recruiter/action-button";
 import {
   NoteComposer,
   StageControl,
@@ -148,13 +149,17 @@ export default async function ApplicantPage(
           <div className="flex flex-wrap items-center justify-between gap-3">
             <StageControl candidate={candidate} />
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" size="sm">
-                <Mail />
-                Message
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/recruiter/messages">
+                  <Mail />
+                  Message
+                </Link>
               </Button>
-              <Button variant="outline" size="sm">
-                <CalendarPlus />
-                Schedule
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/recruiter/interviews">
+                  <CalendarPlus />
+                  Schedule
+                </Link>
               </Button>
             </div>
           </div>
@@ -316,13 +321,14 @@ export default async function ApplicantPage(
                 <span className="min-w-0 flex-1 truncate text-sm">
                   {detail.resume}
                 </span>
-                <Button
+                <ActionButton
                   variant="ghost"
                   size="icon-sm"
                   aria-label="Download resume"
+                  message={`Downloading ${detail.resume}`}
                 >
                   <Download />
-                </Button>
+                </ActionButton>
               </div>
               {detail.links.map((link) => (
                 <a

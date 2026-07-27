@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   Bell,
-  CalendarPlus,
   CircleCheck,
   Handshake,
   Mail,
@@ -30,7 +29,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { activity, alerts, candidate, interviews } from "@/lib/mock-data";
 
