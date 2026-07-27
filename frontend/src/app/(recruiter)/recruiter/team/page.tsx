@@ -232,9 +232,11 @@ export default function TeamPage() {
                 {billing.seatsTotal - billing.seatsUsed} seats left. Interviewers
                 do not use a seat until they accept.
               </p>
-              <Button variant="outline" size="sm" className="w-full">
-                <Users />
-                Add seats
+              <Button variant="outline" size="sm" className="w-full" asChild>
+                <Link href="/recruiter/settings">
+                  <Users />
+                  Add seats
+                </Link>
               </Button>
             </CardContent>
           </Card>

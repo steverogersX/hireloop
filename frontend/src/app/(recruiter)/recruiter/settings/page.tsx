@@ -167,9 +167,14 @@ export default function SettingsPage() {
                       Authenticator app, added March 2026
                     </p>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <ActionButton
+                    variant="outline"
+                    size="sm"
+                    message="Two-factor authentication"
+                    description="Authenticator app, added March 2026."
+                  >
                     Manage
-                  </Button>
+                  </ActionButton>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 rounded-lg border p-3">
                   <div className="min-w-40 flex-1">
@@ -178,10 +183,16 @@ export default function SettingsPage() {
                       3 devices signed in
                     </p>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <ActionButton
+                    variant="outline"
+                    size="sm"
+                    tone="success"
+                    message="Signed out of 3 devices"
+                    description="You will stay signed in here."
+                  >
                     <LogOut />
                     Sign out everywhere
-                  </Button>
+                  </ActionButton>
                 </div>
               </CardContent>
             </Card>

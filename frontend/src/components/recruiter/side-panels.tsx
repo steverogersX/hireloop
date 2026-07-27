@@ -207,9 +207,11 @@ export function SourceMixCard() {
             </li>
           ))}
         </ul>
-        <Button variant="outline" size="sm" className="w-full">
-          <Sparkles />
-          Source more candidates
+        <Button variant="outline" size="sm" className="w-full" asChild>
+          <Link href="/recruiter/search">
+            <Sparkles />
+            Source more candidates
+          </Link>
         </Button>
       </CardContent>
     </Card>
@@ -225,8 +227,15 @@ export function TeamCard() {
           {employer.seatsUsed} of {employer.seatsTotal} seats in use
         </CardDescription>
         <CardAction>
-          <Button variant="ghost" size="icon-sm" aria-label="Invite a teammate">
-            <UserPlus />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Invite a teammate"
+            asChild
+          >
+            <Link href="/recruiter/team">
+              <UserPlus />
+            </Link>
           </Button>
         </CardAction>
       </CardHeader>
@@ -291,8 +300,8 @@ export function ActivityCard() {
             </div>
           );
         })}
-        <Button variant="ghost" size="sm" className="w-full">
-          View all activity
+        <Button variant="ghost" size="sm" className="w-full" asChild>
+          <Link href="/recruiter/applicants">View all activity</Link>
         </Button>
       </CardContent>
     </Card>
