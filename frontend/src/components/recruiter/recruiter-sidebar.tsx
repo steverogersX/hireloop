@@ -42,12 +42,15 @@ type NavItem = {
   icon: LucideIcon;
   badge?: string;
   href?: string;
+  /** Overview sits at the workspace root, so prefix matching would keep it lit
+      on every nested route. */
+  exact?: boolean;
 };
 
 const hiringNav: NavItem[] = [
-  { title: "Overview", icon: LayoutGrid, href: "/recruiter" },
-  { title: "Job postings", icon: Briefcase, badge: "7" },
-  { title: "Applicants", icon: Users, badge: "19" },
+  { title: "Overview", icon: LayoutGrid, href: "/recruiter", exact: true },
+  { title: "Job postings", icon: Briefcase, badge: "7", href: "/recruiter/jobs" },
+  { title: "Applicants", icon: Users, badge: "29" },
   { title: "Interviews", icon: CalendarDays, badge: "4" },
 ];
 
@@ -58,9 +61,10 @@ const companyNav: NavItem[] = [
   { title: "Team", icon: Users },
 ];
 
-function isCurrent(pathname: string, href?: string) {
-  if (!href) return false;
-  return pathname === href || pathname.startsWith(`${href}/`);
+function isCurrent(pathname: string, item: NavItem) {
+  if (!item.href) return false;
+  if (item.exact) return pathname === item.href;
+  return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
 export function RecruiterSidebar() {
@@ -103,7 +107,7 @@ export function RecruiterSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild={Boolean(item.href)}
-                    isActive={isCurrent(pathname, item.href)}
+                    isActive={isCurrent(pathname, item)}
                     tooltip={item.title}
                   >
                     {item.href ? (

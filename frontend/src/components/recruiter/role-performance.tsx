@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   ArrowRight,
   CircleAlert,
@@ -27,20 +28,27 @@ import {
   statusTone,
 } from "@/lib/recruiter-mock-data";
 
+const PREVIEW_LIMIT = 4;
+
 export function RolePerformance() {
-  const roles = openPostings();
+  const open = openPostings();
+  const roles = [...open]
+    .sort((a, b) => Number(Boolean(b.attention)) - Number(Boolean(a.attention)) || b.unreviewed - a.unreviewed)
+    .slice(0, PREVIEW_LIMIT);
 
   return (
     <Card>
       <CardHeader className="border-b">
         <CardTitle>Open roles</CardTitle>
         <CardDescription>
-          How each posting is converting, newest first
+          {roles.length} of {open.length} live postings, most urgent first
         </CardDescription>
         <CardAction>
-          <Button variant="outline" size="sm">
-            All postings
-            <ArrowRight data-icon="inline-end" />
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/recruiter/jobs">
+              All postings
+              <ArrowRight data-icon="inline-end" />
+            </Link>
           </Button>
         </CardAction>
       </CardHeader>
