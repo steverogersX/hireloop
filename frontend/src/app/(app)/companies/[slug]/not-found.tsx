@@ -17,9 +17,9 @@ export default function CompanyNotFound() {
         changed.
       </p>
       <Button asChild className="mt-1">
-        <Link href="/jobs">
+        <Link href="/companies">
           <Compass />
-          Browse open roles
+          Browse all companies
         </Link>
       </Button>
     </div>

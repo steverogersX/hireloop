@@ -6,12 +6,19 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 
-export function FollowButton({ companyName }: { companyName: string }) {
+export function FollowButton({
+  companyName,
+  size,
+}: {
+  companyName: string;
+  size?: React.ComponentProps<typeof Button>["size"];
+}) {
   const [following, setFollowing] = useState(false);
 
   return (
     <Button
       variant={following ? "secondary" : "outline"}
+      size={size}
       aria-pressed={following}
       onClick={() => {
         setFollowing(!following);

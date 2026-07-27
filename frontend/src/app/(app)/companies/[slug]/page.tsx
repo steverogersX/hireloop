@@ -78,7 +78,7 @@ export default async function CompanyPage(props: CompanyPageProps) {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/jobs">Find jobs</Link>
+              <Link href="/companies">Companies</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />

@@ -49,7 +49,7 @@ const searchNav: NavItem[] = [
   { title: "Find jobs", icon: Search, badge: "128", href: "/jobs" },
   { title: "Saved jobs", icon: Bookmark, badge: "9" },
   { title: "Job alerts", icon: Bell, badge: "16" },
-  { title: "Companies", icon: Building2 },
+  { title: "Companies", icon: Building2, href: "/companies" },
 ];
 
 const trackNav: NavItem[] = [

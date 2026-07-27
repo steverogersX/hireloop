@@ -1791,6 +1791,51 @@ export function getCompanyBySlug(slug: string) {
   };
 }
 
+export const sizeBands = ["1–100", "100–500", "500–5,000", "5,000+"] as const;
+
+export function sizeBand(company: Company) {
+  const leading = Number(company.size.replace(/,/g, "").match(/\d+/)?.[0] ?? 0);
+  if (leading >= 5000) return sizeBands[3];
+  if (leading >= 500) return sizeBands[2];
+  if (leading >= 100) return sizeBands[1];
+  return sizeBands[0];
+}
+
+export function companyDirectory() {
+  return [...new Set(jobs.map((job) => job.company))]
+    .map((company) => {
+      const openRoles = jobsAtCompany(company.id);
+      return {
+        company,
+        profile: companyProfiles[company.id],
+        culture: companyCulture[company.id],
+        openRoles: openRoles.length,
+        topSkills: [...new Set(openRoles.flatMap((job) => job.skills))].slice(
+          0,
+          4
+        ),
+        bestMatch: Math.max(...openRoles.map((job) => job.matchScore)),
+        band: sizeBand(company),
+      };
+    })
+    .sort((a, b) => b.openRoles - a.openRoles);
+}
+
+export type DirectoryEntry = ReturnType<typeof companyDirectory>[number];
+
+export function industryFacets() {
+  const counts = [...new Set(jobs.map((job) => job.company))].reduce<
+    Record<string, number>
+  >((acc, company) => {
+    acc[company.industry] = (acc[company.industry] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([industry, count]) => ({ industry, count }));
+}
+
 export function allCompanySlugs() {
   return [...new Set(jobs.map((job) => companySlug(job.company)))];
 }
