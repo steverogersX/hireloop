@@ -46,7 +46,7 @@ type NavItem = {
 
 const searchNav: NavItem[] = [
   { title: "Overview", icon: LayoutGrid, href: "/dashboard" },
-  { title: "Find jobs", icon: Search, badge: "128" },
+  { title: "Find jobs", icon: Search, badge: "128", href: "/jobs" },
   { title: "Saved jobs", icon: Bookmark, badge: "9" },
   { title: "Job alerts", icon: Bell, badge: "16" },
   { title: "Companies", icon: Building2 },
@@ -57,6 +57,11 @@ const trackNav: NavItem[] = [
   { title: "Messages", icon: MessagesSquare, badge: "3" },
   { title: "Profile & resume", icon: CircleUser },
 ];
+
+function isCurrent(pathname: string, href?: string) {
+  if (!href) return false;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -93,7 +98,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild={Boolean(item.href)}
-                    isActive={item.href ? pathname === item.href : false}
+                    isActive={isCurrent(pathname, item.href)}
                     tooltip={item.title}
                   >
                     {item.href ? (

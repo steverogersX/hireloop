@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { SlidersHorizontal, Sparkles } from "lucide-react";
 
 import { JobCard } from "@/components/dashboard/job-card";
@@ -83,9 +84,11 @@ export function JobFeed() {
                 </SelectContent>
               </Select>
             ))}
-            <Button variant="outline" size="sm">
-              <SlidersHorizontal />
-              All filters
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/jobs">
+                <SlidersHorizontal />
+                All filters
+              </Link>
             </Button>
           </div>
         </div>
@@ -114,8 +117,8 @@ export function JobFeed() {
             )}
 
             {list.length > 0 && (
-              <Button variant="outline" className="mx-auto mt-1">
-                Load more roles
+              <Button variant="outline" className="mx-auto mt-1" asChild>
+                <Link href="/jobs">See all matching roles</Link>
               </Button>
             )}
           </TabsContent>
@@ -133,8 +136,8 @@ function EmptyState({ tab }: { tab: string }) {
         Roles you act on show up here. Start from Recommended — 6 of them match
         above 85%.
       </p>
-      <Button size="sm" className="mt-1">
-        Browse recommended roles
+      <Button size="sm" className="mt-1" asChild>
+        <Link href="/jobs">Browse recommended roles</Link>
       </Button>
     </div>
   );

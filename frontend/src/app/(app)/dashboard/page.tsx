@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Compass, SlidersHorizontal } from "lucide-react";
 
 import { ApplicationsPanel } from "@/components/dashboard/applications-panel";
@@ -42,9 +43,11 @@ export default function DashboardPage() {
             <SlidersHorizontal />
             Job preferences
           </Button>
-          <Button>
-            <Compass />
-            Browse all jobs
+          <Button asChild>
+            <Link href="/jobs">
+              <Compass />
+              Browse all jobs
+            </Link>
           </Button>
         </div>
       </header>
