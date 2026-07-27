@@ -206,7 +206,169 @@ export const candidate = {
     { label: "Confirm salary expectation", weight: "+7%" },
     { label: "Verify your last role", weight: "+7%" },
   ],
+  phone: "+31 6 12 34 56 78",
+  website: "priyaraman.dev",
+  github: "github.com/priyaraman",
+  linkedin: "linkedin.com/in/priyaraman",
+  bio: "Frontend engineer with eight years on design systems and data-heavy product UI. I like the unglamorous parts — token pipelines, migration paths, keyboard interaction — and I write things down so the next person does not have to guess.",
+  skills: [
+    "React",
+    "TypeScript",
+    "Design systems",
+    "Accessibility",
+    "Testing",
+    "Next.js",
+    "CSS architecture",
+    "Mentoring",
+  ],
+  languages: [
+    { name: "English", level: "Fluent" },
+    { name: "Dutch", level: "Conversational" },
+    { name: "Tamil", level: "Native" },
+  ],
 };
+
+export type Experience = {
+  id: string;
+  role: string;
+  company: string;
+  initials: string;
+  logoClass: string;
+  period: string;
+  duration: string;
+  location: string;
+  summary: string;
+  highlights: string[];
+  current: boolean;
+};
+
+export const experience: Experience[] = [
+  {
+    id: "e-1",
+    role: "Senior Frontend Engineer",
+    company: "Kestrel Software",
+    initials: "KS",
+    logoClass: "bg-sky-700 text-white",
+    period: "Mar 2022 — present",
+    duration: "3 yrs 5 mos",
+    location: "Amsterdam, NL · Hybrid",
+    summary:
+      "Own the design system behind four products and the migration path teams follow to adopt it.",
+    highlights: [
+      "Cut component duplication across four apps from 180 to 32 shared primitives.",
+      "Took keyboard and screen reader support to WCAG 2.2 AA on every shipped surface.",
+      "Mentored three engineers, two promoted to senior.",
+    ],
+    current: true,
+  },
+  {
+    id: "e-2",
+    role: "Frontend Engineer",
+    company: "Vellum Analytics",
+    initials: "VA",
+    logoClass: "bg-fuchsia-700 text-white",
+    period: "Jun 2019 — Feb 2022",
+    duration: "2 yrs 9 mos",
+    location: "Amsterdam, NL",
+    summary:
+      "Built the dashboard layer for a product analytics tool used by 900 teams.",
+    highlights: [
+      "Rebuilt the chart renderer, cutting time to interactive on large dashboards by 61%.",
+      "Introduced visual regression testing that caught 40+ layout breaks before release.",
+    ],
+    current: false,
+  },
+  {
+    id: "e-3",
+    role: "Junior Developer",
+    company: "Tidewater Studio",
+    initials: "TS",
+    logoClass: "bg-emerald-700 text-white",
+    period: "Aug 2017 — May 2019",
+    duration: "1 yr 10 mos",
+    location: "Chennai, IN",
+    summary:
+      "Agency work across a dozen client sites, mostly ecommerce front ends.",
+    highlights: [
+      "Shipped 14 client projects, four of which are still running unchanged.",
+    ],
+    current: false,
+  },
+];
+
+export type Education = {
+  id: string;
+  school: string;
+  degree: string;
+  period: string;
+  detail: string;
+};
+
+export const education: Education[] = [
+  {
+    id: "ed-1",
+    school: "University of Amsterdam",
+    degree: "MSc Information Studies, Human-Centered Multimedia",
+    period: "2015 — 2017",
+    detail: "Thesis on keyboard interaction models in data-dense interfaces.",
+  },
+  {
+    id: "ed-2",
+    school: "Anna University",
+    degree: "BE Computer Science and Engineering",
+    period: "2011 — 2015",
+    detail: "Graduated with distinction.",
+  },
+];
+
+export type ResumeFile = {
+  id: string;
+  name: string;
+  size: string;
+  updated: string;
+  usedIn: number;
+  isDefault: boolean;
+};
+
+export const resumeFiles: ResumeFile[] = [
+  {
+    id: "cv-1",
+    name: "priya-raman-frontend.pdf",
+    size: "284 KB",
+    updated: "4 days ago",
+    usedIn: 11,
+    isDefault: true,
+  },
+  {
+    id: "cv-2",
+    name: "priya-raman-platform.pdf",
+    size: "301 KB",
+    updated: "in June",
+    usedIn: 3,
+    isDefault: false,
+  },
+];
+
+export const profileVisibility = [
+  {
+    id: "searchable",
+    label: "Appear in recruiter search",
+    detail: "17 recruiters found you this month.",
+    enabled: true,
+  },
+  {
+    id: "current-employer",
+    label: "Hide from Kestrel Software",
+    detail: "Your current employer cannot see your profile.",
+    enabled: true,
+  },
+  {
+    id: "salary",
+    label: "Show salary expectation",
+    detail: "Only to companies whose range overlaps yours.",
+    enabled: false,
+  },
+];
 
 export const stats = [
   {
