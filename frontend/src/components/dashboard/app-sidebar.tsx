@@ -55,7 +55,7 @@ const searchNav: NavItem[] = [
 const trackNav: NavItem[] = [
   { title: "Applications", icon: FileText, badge: "34" },
   { title: "Messages", icon: MessagesSquare, badge: "3" },
-  { title: "Profile & resume", icon: CircleUser },
+  { title: "Profile & resume", icon: CircleUser, href: "/profile" },
 ];
 
 function isCurrent(pathname: string, href?: string) {
