@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { ApplicationsTable } from "@/components/dashboard/applications-table";
@@ -24,9 +25,11 @@ export function ApplicationsPanel() {
           34 applications since March · 1 offer waiting on you
         </CardDescription>
         <CardAction>
-          <Button variant="outline" size="sm">
-            All applications
-            <ArrowRight data-icon="inline-end" />
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/applications">
+              All applications
+              <ArrowRight data-icon="inline-end" />
+            </Link>
           </Button>
         </CardAction>
       </CardHeader>
