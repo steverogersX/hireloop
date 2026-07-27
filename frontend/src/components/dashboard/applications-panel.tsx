@@ -1,6 +1,6 @@
 import { ArrowRight } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import { ApplicationsTable } from "@/components/dashboard/applications-table";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,25 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { applications, pipeline, type ApplicationStage } from "@/lib/mock-data";
-
-const stageTone: Record<ApplicationStage, string> = {
-  Applied: "bg-muted text-muted-foreground",
-  Screening: "bg-chart-3/12 text-chart-3",
-  Interview: "bg-chart-2/15 text-chart-2",
-  Offer: "bg-chart-5/12 text-chart-5",
-  Rejected: "bg-destructive/10 text-destructive",
-};
+import { pipeline } from "@/lib/mock-data";
 
 export function ApplicationsPanel() {
   const total = pipeline.reduce((sum, step) => sum + step.count, 0);
@@ -79,65 +62,7 @@ export function ApplicationsPanel() {
           </div>
         </div>
 
-        <div className="-mx-(--card-spacing) overflow-x-auto">
-          <Table className="min-w-[42rem]">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="pl-(--card-spacing)">Role</TableHead>
-                <TableHead>Stage</TableHead>
-                <TableHead className="w-40">Progress</TableHead>
-                <TableHead>Next step</TableHead>
-                <TableHead className="pr-(--card-spacing) text-right">
-                  Applied
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {applications.map((application) => (
-                <TableRow key={application.id}>
-                  <TableCell className="pl-(--card-spacing)">
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className={cn(
-                          "flex size-7 shrink-0 items-center justify-center rounded-md font-heading text-[11px] font-semibold",
-                          application.company.logoClass
-                        )}
-                        aria-hidden
-                      >
-                        {application.company.initials}
-                      </span>
-                      <div className="grid leading-tight">
-                        <span className="font-medium">
-                          {application.jobTitle}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {application.company.name}
-                        </span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={stageTone[application.stage]}>
-                      {application.stage}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Progress value={application.progress} />
-                    <span className="mt-1.5 block text-xs text-muted-foreground">
-                      {application.lastUpdate}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {application.nextStep}
-                  </TableCell>
-                  <TableCell className="pr-(--card-spacing) text-right font-mono text-xs text-muted-foreground tabular-nums">
-                    {application.appliedOn}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <ApplicationsTable />
       </CardContent>
     </Card>
   );

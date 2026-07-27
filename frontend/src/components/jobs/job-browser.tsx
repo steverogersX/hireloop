@@ -13,7 +13,7 @@ import {
 import { toast } from "sonner";
 
 import { JobCard } from "@/components/dashboard/job-card";
-import { JobRow } from "@/components/jobs/job-row";
+import { JobsTable } from "@/components/jobs/jobs-table";
 import {
   Accordion,
   AccordionContent,
@@ -483,7 +483,9 @@ export function JobBrowser() {
             </div>
           </div>
 
-          {visible.length === 0 ? (
+          {view === "compact" ? (
+            <JobsTable jobs={results} />
+          ) : visible.length === 0 ? (
             <div className="grid justify-items-center gap-2 rounded-xl border border-dashed px-6 py-16 text-center">
               <p className="font-heading text-sm font-medium">
                 No roles match every filter
@@ -504,18 +506,14 @@ export function JobBrowser() {
               </Button>
             </div>
           ) : (
-            <div className={view === "list" ? "grid gap-3" : "grid gap-2"}>
-              {visible.map((job) =>
-                view === "list" ? (
-                  <JobCard key={job.id} job={job} />
-                ) : (
-                  <JobRow key={job.id} job={job} />
-                )
-              )}
+            <div className="grid gap-3">
+              {visible.map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
             </div>
           )}
 
-          {totalPages > 1 && (
+          {view === "list" && totalPages > 1 && (
             <Pagination className="mt-1">
               <PaginationContent>
                 <PaginationItem>
