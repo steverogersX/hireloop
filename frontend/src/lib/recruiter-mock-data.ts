@@ -135,7 +135,7 @@ export const hiringStats = [
     delta: "+12",
     deltaLabel: "last 7 days",
     trend: "up" as const,
-    hint: "19 still unreviewed",
+    hint: "29 still unreviewed",
   },
   {
     id: "interviews",
@@ -308,6 +308,48 @@ export const postings: Posting[] = [
     attention: "No interviews booked after 58 applicants",
   },
   {
+    id: "p-1053",
+    title: "Solutions Engineer",
+    location: "Remote — Europe",
+    workplace: "Remote",
+    employment: "Full-time",
+    seniority: "Mid",
+    status: "Published",
+    salaryMin: 66000,
+    salaryMax: 84000,
+    currency: "€",
+    postedAgo: "9 days ago",
+    closesIn: "Closes in 19 days",
+    views: 528,
+    applicants: 26,
+    unreviewed: 3,
+    interviewing: 2,
+    offers: 0,
+    conversion: 4.9,
+    ownerId: "t-dara",
+  },
+  {
+    id: "p-1049",
+    title: "Data Platform Engineer",
+    location: "Amsterdam, NL",
+    workplace: "Hybrid",
+    employment: "Full-time",
+    seniority: "Senior",
+    status: "Published",
+    salaryMin: 78000,
+    salaryMax: 98000,
+    currency: "€",
+    postedAgo: "2 weeks ago",
+    closesIn: "Closes in 8 days",
+    views: 604,
+    applicants: 31,
+    unreviewed: 5,
+    interviewing: 3,
+    offers: 0,
+    conversion: 5.1,
+    ownerId: "t-sven",
+  },
+  {
     id: "p-1055",
     title: "Site Reliability Engineer",
     location: "Amsterdam, NL",
@@ -328,6 +370,49 @@ export const postings: Posting[] = [
     conversion: 0,
     ownerId: "t-sven",
     attention: "Draft waiting on a salary band",
+  },
+  {
+    id: "p-1056",
+    title: "Engineering Manager, Platform",
+    location: "Amsterdam, NL",
+    workplace: "Hybrid",
+    employment: "Full-time",
+    seniority: "Lead",
+    status: "Draft",
+    salaryMin: 98000,
+    salaryMax: 124000,
+    currency: "€",
+    postedAgo: "Drafted 6 days ago",
+    closesIn: "Not published",
+    views: 0,
+    applicants: 0,
+    unreviewed: 0,
+    interviewing: 0,
+    offers: 0,
+    conversion: 0,
+    ownerId: "t-dara",
+    attention: "Draft needs approval from finance",
+  },
+  {
+    id: "p-1021",
+    title: "QA Engineer",
+    location: "Remote — Europe",
+    workplace: "Remote",
+    employment: "Full-time",
+    seniority: "Mid",
+    status: "Closed",
+    salaryMin: 58000,
+    salaryMax: 72000,
+    currency: "€",
+    postedAgo: "3 months ago",
+    closesIn: "Closed without a hire",
+    views: 810,
+    applicants: 44,
+    unreviewed: 0,
+    interviewing: 0,
+    offers: 0,
+    conversion: 5.4,
+    ownerId: "t-sven",
   },
   {
     id: "p-1012",
@@ -676,4 +761,23 @@ export function postingsNeedingAttention() {
 
 export function unreviewedTotal() {
   return postings.reduce((sum, posting) => sum + posting.unreviewed, 0);
+}
+
+export function postingCounts() {
+  return {
+    all: postings.length,
+    Published: postings.filter((p) => p.status === "Published").length,
+    Draft: postings.filter((p) => p.status === "Draft").length,
+    Closed: postings.filter((p) => p.status === "Closed").length,
+  };
+}
+
+export function postingTotals() {
+  const open = openPostings();
+  return {
+    applicants: open.reduce((sum, posting) => sum + posting.applicants, 0),
+    interviewing: open.reduce((sum, posting) => sum + posting.interviewing, 0),
+    offers: open.reduce((sum, posting) => sum + posting.offers, 0),
+    views: open.reduce((sum, posting) => sum + posting.views, 0),
+  };
 }
