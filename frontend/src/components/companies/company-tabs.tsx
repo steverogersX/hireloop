@@ -1,6 +1,7 @@
 "use client";
 
 import { Building2, Check, MessageSquareQuote, Star } from "lucide-react";
+import { toast } from "sonner";
 
 import { HiringProcess } from "@/components/companies/hiring-process";
 import { JobsTable } from "@/components/jobs/jobs-table";
@@ -201,7 +202,15 @@ export function CompanyTabs({
               The ratings above come from exit surveys. Worked here? Yours would
               be the first review other candidates read.
             </p>
-            <Button size="sm" className="mt-1">
+            <Button
+              size="sm"
+              className="mt-1"
+              onClick={() =>
+                toast("Reviews open once you have worked somewhere 90 days", {
+                  description: `We will ask you about ${company.name} if you join.`,
+                })
+              }
+            >
               Write a review
             </Button>
           </div>

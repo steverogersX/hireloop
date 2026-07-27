@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Bookmark } from "lucide-react";
@@ -46,13 +47,17 @@ export default function JobsPage() {
             profile, not the job title.
           </p>
         </div>
-        <Button variant="outline">
-          <Bookmark />
-          Saved searches
+        <Button variant="outline" asChild>
+          <Link href="/saved">
+            <Bookmark />
+            Saved searches
+          </Link>
         </Button>
       </header>
 
-      <JobBrowser />
+      <Suspense fallback={null}>
+        <JobBrowser />
+      </Suspense>
     </div>
   );
 }

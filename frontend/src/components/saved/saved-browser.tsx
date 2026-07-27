@@ -25,9 +25,12 @@ export function SavedBrowser() {
   const [folder, setFolder] = useState<string>("all");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("recent");
+  const [removed, setRemoved] = useState<string[]>([]);
+
+  const kept = rows.filter((row) => !removed.includes(row.job.id));
 
   const results = useMemo(() => {
-    const filtered = rows.filter(({ entry, job }) => {
+    const filtered = kept.filter(({ entry, job }) => {
       if (folder !== "all" && entry.folder !== folder) return false;
       if (!query) return true;
       const haystack =
@@ -41,14 +44,14 @@ export function SavedBrowser() {
         return (a.entry.closingIn ? 0 : 1) - (b.entry.closingIn ? 0 : 1);
       return a.entry.daysAgo - b.entry.daysAgo;
     });
-  }, [folder, query, sort]);
+  }, [kept, folder, query, sort]);
 
   return (
     <div className="grid gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <FolderChip
           label="All"
-          count={rows.length}
+          count={kept.length}
           active={folder === "all"}
           onClick={() => setFolder("all")}
         />
@@ -56,7 +59,7 @@ export function SavedBrowser() {
           <FolderChip
             key={name}
             label={name}
-            count={rows.filter((row) => row.entry.folder === name).length}
+            count={kept.filter((row) => row.entry.folder === name).length}
             active={folder === name}
             onClick={() => setFolder(name)}
           />
@@ -114,7 +117,10 @@ export function SavedBrowser() {
                 variant="ghost"
                 size="xs"
                 className="ml-auto"
-                onClick={() => toast(`Removed ${job.title} from saved`)}
+                onClick={() => {
+                  setRemoved((prev) => [...prev, job.id]);
+                  toast(`Removed ${job.title} from saved`);
+                }}
               >
                 <Trash2 />
                 Remove

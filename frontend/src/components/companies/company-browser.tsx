@@ -21,6 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useFollowedCompanies } from "@/hooks/use-follows";
 import {
   companyDirectory,
   industryFacets,
@@ -46,8 +47,10 @@ export function CompanyBrowser() {
   const [bands, setBands] = useState<string[]>([]);
   const [minRating, setMinRating] = useState(0);
   const [hiringOnly, setHiringOnly] = useState(false);
+  const [followedOnly, setFollowedOnly] = useState(false);
   const [sort, setSort] = useState("roles");
   const [view, setView] = useState("grid");
+  const followed = useFollowedCompanies();
 
   const toggle = (
     value: string,
@@ -75,10 +78,11 @@ export function CompanyBrowser() {
           if (bands.length && !bands.includes(entry.band)) return false;
           if (entry.company.rating < minRating) return false;
           if (hiringOnly && entry.openRoles === 0) return false;
+          if (followedOnly && !followed.has(entry.company.id)) return false;
           return true;
         })
         .sort(sorters[sort]),
-    [query, pickedIndustries, bands, minRating, hiringOnly, sort]
+    [query, pickedIndustries, bands, minRating, hiringOnly, followedOnly, followed, sort]
   );
 
   const chips = [
@@ -96,6 +100,9 @@ export function CompanyBrowser() {
     ...(hiringOnly
       ? [{ label: "Hiring now", clear: () => setHiringOnly(false) }]
       : []),
+    ...(followedOnly
+      ? [{ label: "Following only", clear: () => setFollowedOnly(false) }]
+      : []),
   ];
 
   const clearAll = () => {
@@ -104,6 +111,7 @@ export function CompanyBrowser() {
     setBands([]);
     setMinRating(0);
     setHiringOnly(false);
+    setFollowedOnly(false);
   };
 
   return (
@@ -193,6 +201,17 @@ export function CompanyBrowser() {
                 id="hiring-only"
                 checked={hiringOnly}
                 onCheckedChange={setHiringOnly}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="followed-only" className="text-sm font-normal">
+                Only companies I follow
+              </Label>
+              <Switch
+                id="followed-only"
+                checked={followedOnly}
+                onCheckedChange={setFollowedOnly}
               />
             </div>
           </CardContent>

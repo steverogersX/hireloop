@@ -14,6 +14,11 @@ import {
 } from "lucide-react";
 
 import { MatchRing } from "@/components/dashboard/match-ring";
+import {
+  AlertToggle,
+  InterviewActions,
+  InterviewCalendarButton,
+} from "@/components/dashboard/panel-controls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,8 +58,8 @@ export function ProfileStrengthCard() {
         <ul className="grid gap-1.5">
           {candidate.profileGaps.map((gap) => (
             <li key={gap.label}>
-              <button
-                type="button"
+              <Link
+                href="/profile"
                 className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
               >
                 <Plus className="size-3.5 text-muted-foreground" />
@@ -62,7 +67,7 @@ export function ProfileStrengthCard() {
                 <span className="font-mono text-xs text-chart-5">
                   {gap.weight}
                 </span>
-              </button>
+              </Link>
             </li>
           ))}
         </ul>
@@ -84,9 +89,7 @@ export function InterviewsCard() {
         <CardTitle>Upcoming interviews</CardTitle>
         <CardDescription>Next 7 days</CardDescription>
         <CardAction>
-          <Button variant="ghost" size="icon-sm" aria-label="Add to calendar">
-            <CalendarPlus />
-          </Button>
+          <InterviewCalendarButton />
         </CardAction>
       </CardHeader>
       <CardContent className="grid gap-3">
@@ -133,10 +136,10 @@ export function InterviewsCard() {
                     Awaiting you
                   </Badge>
                 )}
-                <Button variant="ghost" size="xs" className="ml-auto">
-                  Reschedule
-                </Button>
-                <Button size="xs">Prep notes</Button>
+                <InterviewActions
+                  round={interview.round}
+                  company={interview.company.name}
+                />
               </div>
             </div>
           );
@@ -153,8 +156,10 @@ export function AlertsCard() {
         <CardTitle>Job alerts</CardTitle>
         <CardDescription>16 new roles since Monday</CardDescription>
         <CardAction>
-          <Button variant="ghost" size="icon-sm" aria-label="Create alert">
-            <Plus />
+          <Button variant="ghost" size="icon-sm" aria-label="Create alert" asChild>
+            <Link href="/alerts">
+              <Plus />
+            </Link>
           </Button>
         </CardAction>
       </CardHeader>
@@ -173,10 +178,7 @@ export function AlertsCard() {
                 {alert.newCount} new
               </Badge>
             )}
-            <Switch
-              defaultChecked={alert.active}
-              aria-label={`Alert for ${alert.query}`}
-            />
+            <AlertToggle query={alert.query} active={alert.active} />
           </div>
         ))}
       </CardContent>
@@ -217,8 +219,8 @@ export function ActivityCard() {
             </div>
           );
         })}
-        <Button variant="ghost" size="sm" className="w-full">
-          View all activity
+        <Button variant="ghost" size="sm" className="w-full" asChild>
+          <Link href="/applications">View all activity</Link>
         </Button>
       </CardContent>
     </Card>

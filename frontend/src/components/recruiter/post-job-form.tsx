@@ -659,10 +659,7 @@ export function PostJobForm() {
               )}
             </form.Subscribe>
           ) : (
-            <form.Subscribe
-              selector={(state) => state.fieldMeta}
-              // eslint-disable-next-line react-hooks/incompatible-library
-            >
+            <form.Subscribe selector={(state) => state.fieldMeta}>
               {(fieldMeta) => {
                 const blocked = STEP_FIELDS[current.id].some(
                   (name) => (fieldMeta[name]?.errors.length ?? 0) > 0

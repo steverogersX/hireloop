@@ -28,6 +28,17 @@ export function MessageCenter() {
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
   const [sent, setSent] = useState<Record<string, string[]>>({});
+  const [starred, setStarred] = useState(
+    () => new Set(threads.filter((t) => t.starred).map((t) => t.id))
+  );
+
+  const toggleStar = (id: string) =>
+    setStarred((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const active = threads.find((thread) => thread.id === activeId) ?? threads[0];
   const visible = threads.filter((thread) =>
@@ -73,6 +84,7 @@ export function MessageCenter() {
                   key={thread.id}
                   thread={thread}
                   active={thread.id === active.id}
+                  starred={starred.has(thread.id)}
                   onSelect={() => setActiveId(thread.id)}
                 />
               ))
@@ -108,9 +120,17 @@ export function MessageCenter() {
               </p>
             </div>
             <div className="flex items-center gap-1.5">
-              <Button variant="ghost" size="icon-sm" aria-label="Star thread">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={starred.has(active.id) ? "Unstar thread" : "Star thread"}
+                aria-pressed={starred.has(active.id)}
+                onClick={() => toggleStar(active.id)}
+              >
                 <Star
-                  className={cn(active.starred && "fill-chart-2 text-chart-2")}
+                  className={cn(
+                    starred.has(active.id) && "fill-chart-2 text-chart-2"
+                  )}
                 />
               </Button>
               <Button
@@ -201,11 +221,25 @@ export function MessageCenter() {
               aria-label={`Reply to ${active.person}`}
             />
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => toast("Attach a file up to 10 MB")}
+              >
                 <Paperclip />
                 Attach
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setDraft((prev) =>
+                    prev
+                      ? prev
+                      : `Would any of these work?\n\n· Thursday 14:00\n· Friday 10:30\n· Monday 16:00`
+                  )
+                }
+              >
                 <CalendarClock />
                 Propose a time
               </Button>
@@ -232,10 +266,12 @@ export function MessageCenter() {
 function ThreadRow({
   thread,
   active,
+  starred,
   onSelect,
 }: {
   thread: Thread;
   active: boolean;
+  starred: boolean;
   onSelect: () => void;
 }) {
   return (
@@ -261,7 +297,7 @@ function ThreadRow({
         <span className="min-w-0 flex-1 truncate text-sm font-medium">
           {thread.person}
         </span>
-        {thread.starred && (
+        {starred && (
           <Star className="size-3 shrink-0 fill-chart-2 text-chart-2" />
         )}
         <span className="shrink-0 font-mono text-[10px] text-muted-foreground tabular-nums">

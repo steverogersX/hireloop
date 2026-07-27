@@ -104,7 +104,16 @@ function AlertRow({ alert }: { alert: Alert }) {
           </div>
 
           <div className="flex items-center gap-1.5">
-            <Button variant="ghost" size="icon-sm" aria-label="Edit alert">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Edit the ${alert.query} alert`}
+              onClick={() =>
+                toast(`Editing "${alert.query}"`, {
+                  description: `${alert.location} · ${alert.frequency}`,
+                })
+              }
+            >
               <Pencil />
             </Button>
             <Button

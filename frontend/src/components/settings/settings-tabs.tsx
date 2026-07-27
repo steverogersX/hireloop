@@ -300,12 +300,26 @@ function NotificationSettings() {
             <div className="flex w-14 justify-center">
               <Switch
                 defaultChecked={setting.email}
+                onCheckedChange={(value) =>
+                  toast(
+                    value
+                      ? `Email on for ${setting.label.toLowerCase()}`
+                      : `Email off for ${setting.label.toLowerCase()}`
+                  )
+                }
                 aria-label={`${setting.label} by email`}
               />
             </div>
             <div className="flex w-14 justify-center">
               <Switch
                 defaultChecked={setting.push}
+                onCheckedChange={(value) =>
+                  toast(
+                    value
+                      ? `Push on for ${setting.label.toLowerCase()}`
+                      : `Push off for ${setting.label.toLowerCase()}`
+                  )
+                }
                 aria-label={`${setting.label} by push`}
               />
             </div>
@@ -455,7 +469,13 @@ function Row({
         </Label>
         <span className="text-xs text-muted-foreground">{detail}</span>
       </div>
-      <Switch id={id} defaultChecked={defaultChecked} />
+      <Switch
+        id={id}
+        defaultChecked={defaultChecked}
+        onCheckedChange={(value) =>
+          toast(value ? `On — ${label.toLowerCase()}` : `Off — ${label.toLowerCase()}`)
+        }
+      />
     </div>
   );
 }

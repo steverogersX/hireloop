@@ -150,7 +150,10 @@ export default async function CompanyPage(props: CompanyPageProps) {
                   <ArrowUpRight data-icon="inline-end" />
                 </a>
               </Button>
-              <FollowButton companyName={company.name} />
+              <FollowButton
+                companyId={company.id}
+                companyName={company.name}
+              />
             </div>
           </div>
 
@@ -209,9 +212,11 @@ export default async function CompanyPage(props: CompanyPageProps) {
                   </div>
                 </div>
               ))}
-              <Button variant="outline" size="sm" className="w-full">
-                <CalendarClock />
-                Ask a question
+              <Button variant="outline" size="sm" className="w-full" asChild>
+                <Link href="/messages">
+                  <CalendarClock />
+                  Ask a question
+                </Link>
               </Button>
             </CardContent>
           </Card>

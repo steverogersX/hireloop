@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, Plus } from "lucide-react";
 
+import { ApplicationsActions } from "@/components/applications/applications-actions";
 import { ApplicationsBrowser } from "@/components/applications/applications-browser";
 import {
   Breadcrumb,
@@ -48,16 +48,7 @@ export default function ApplicationsPage() {
             and two with no reply in over three weeks.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline">
-            <Download />
-            Export CSV
-          </Button>
-          <Button>
-            <Plus />
-            Add application
-          </Button>
-        </div>
+        <ApplicationsActions />
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   BellPlus,
   LayoutList,
@@ -128,7 +129,11 @@ const sorters: Record<string, (a: Job, b: Job) => number> = {
 };
 
 export function JobBrowser() {
-  const [filters, setFilters] = useState<Filters>(EMPTY);
+  const initialQuery = useSearchParams().get("q") ?? "";
+  const [filters, setFilters] = useState<Filters>({
+    ...EMPTY,
+    query: initialQuery,
+  });
   const [sort, setSort] = useState("match");
   const [view, setView] = useState("list");
   const [page, setPage] = useState(1);

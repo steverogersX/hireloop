@@ -17,6 +17,7 @@ import {
   Settings,
   Sparkles,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -126,7 +127,15 @@ export function AppSidebar() {
             See who viewed your profile and how you rank against other
             applicants.
           </p>
-          <Button size="sm" className="mt-2.5 w-full">
+          <Button
+            size="sm"
+            className="mt-2.5 w-full"
+            onClick={() =>
+              toast("HireLoop Pro, 14 days free", {
+                description: "No card needed. Cancel from Settings any time.",
+              })
+            }
+          >
             Start 14-day trial
           </Button>
         </div>

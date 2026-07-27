@@ -1,4 +1,7 @@
+"use client";
+
 import { GraduationCap, Pencil, Plus } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,7 +26,16 @@ export function CareerHistory() {
             Eight years, three companies. Recruiters read the top entry first.
           </CardDescription>
           <CardAction>
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                toast("Add a role", {
+                  description:
+                    "Roles you add show above your current one until you set the dates.",
+                })
+              }
+            >
               <Plus />
               Add role
             </Button>
@@ -64,6 +76,11 @@ export function CareerHistory() {
                     variant="ghost"
                     size="icon-sm"
                     aria-label={`Edit ${role.role} at ${role.company}`}
+                    onClick={() =>
+                      toast(`Editing ${role.role}`, {
+                        description: role.company,
+                      })
+                    }
                   >
                     <Pencil />
                   </Button>
@@ -94,7 +111,11 @@ export function CareerHistory() {
         <CardHeader>
           <CardTitle>Education</CardTitle>
           <CardAction>
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => toast("Add a qualification")}
+            >
               <Plus />
               Add
             </Button>

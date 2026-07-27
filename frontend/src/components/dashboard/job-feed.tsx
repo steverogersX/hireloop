@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { jobs } from "@/lib/mock-data";
+import { annualSalary, jobs } from "@/lib/mock-data";
 
 const TABS = [
   { value: "recommended", label: "Recommended" },
@@ -42,17 +42,40 @@ const filters = [
   },
 ];
 
-function listFor(tab: string) {
-  if (tab === "saved") return jobs.filter((job) => job.saved);
-  if (tab === "applied") return jobs.filter((job) => job.applied);
-  if (tab === "recommended")
-    return [...jobs].sort((a, b) => b.matchScore - a.matchScore);
-  return jobs;
+type Picks = { workplace: string; employment: string; salary: string };
+
+const ANY: Picks = {
+  workplace: "Any workplace",
+  employment: "Any type",
+  salary: "Any salary",
+};
+
+function listFor(tab: string, picks: Picks = ANY) {
+  const base =
+    tab === "saved"
+      ? jobs.filter((job) => job.saved)
+      : tab === "applied"
+        ? jobs.filter((job) => job.applied)
+        : tab === "recommended"
+          ? [...jobs].sort((a, b) => b.matchScore - a.matchScore)
+          : jobs;
+
+  const floor = Number(picks.salary.replace(/\D/g, "")) * 1000;
+
+  return base.filter((job) => {
+    if (picks.workplace !== ANY.workplace && job.workplace !== picks.workplace)
+      return false;
+    if (picks.employment !== ANY.employment && job.employment !== picks.employment)
+      return false;
+    if (floor > 0 && annualSalary(job) < floor) return false;
+    return true;
+  });
 }
 
 export function JobFeed() {
   const [tab, setTab] = useState<string>("recommended");
-  const list = listFor(tab);
+  const [picks, setPicks] = useState<Picks>(ANY);
+  const list = listFor(tab, picks);
 
   return (
     <section className="grid gap-3">
@@ -63,7 +86,7 @@ export function JobFeed() {
               <TabsTrigger key={item.value} value={item.value}>
                 {item.label}
                 <Badge variant="secondary" className="ml-1.5 font-mono">
-                  {listFor(item.value).length}
+                  {listFor(item.value, picks).length}
                 </Badge>
               </TabsTrigger>
             ))}
@@ -71,7 +94,13 @@ export function JobFeed() {
 
           <div className="flex flex-wrap items-center gap-1.5">
             {filters.map((filter) => (
-              <Select key={filter.id}>
+              <Select
+                key={filter.id}
+                value={picks[filter.id as keyof Picks]}
+                onValueChange={(value) =>
+                  setPicks((prev) => ({ ...prev, [filter.id]: value }))
+                }
+              >
                 <SelectTrigger size="sm" className="w-auto min-w-28">
                   <SelectValue placeholder={filter.placeholder} />
                 </SelectTrigger>

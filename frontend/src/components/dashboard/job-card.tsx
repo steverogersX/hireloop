@@ -165,7 +165,9 @@ export function JobCard({ job }: { job: Job }) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => toast("Link copied to clipboard")}
+                >
                   <Share2 />
                   Share this role
                 </DropdownMenuItem>
@@ -176,7 +178,13 @@ export function JobCard({ job }: { job: Job }) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() =>
+                    toast(`Fewer roles like ${job.title}`, {
+                      description: "Your feed updates on the next refresh.",
+                    })
+                  }
+                >
                   <EyeOff />
                   Hide similar roles
                 </DropdownMenuItem>
