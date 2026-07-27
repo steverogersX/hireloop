@@ -81,9 +81,11 @@ export default function RecruiterJobsPage() {
             <Upload />
             Import from ATS
           </Button>
-          <Button>
-            <Plus />
-            Post a job
+          <Button asChild>
+            <Link href="/recruiter/jobs/new">
+              <Plus />
+              Post a job
+            </Link>
           </Button>
         </div>
       </header>
