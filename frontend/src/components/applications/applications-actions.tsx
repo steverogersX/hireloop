@@ -4,7 +4,8 @@ import { Download, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { applications } from "@/lib/mock-data";
+import { shortDate, statusLabel } from "@/lib/format";
+import type { Application } from "@/types/api";
 
 const COLUMNS = [
   "Role",
@@ -14,35 +15,39 @@ const COLUMNS = [
   "Applied",
   "Days ago",
   "Source",
-  "Salary",
   "Next step",
 ] as const;
 
-function toCsv() {
+function toCsv(applications: Application[]) {
   const escape = (value: string) => `"${value.replace(/"/g, '""')}"`;
 
   const rows = applications.map((item) =>
     [
-      item.jobTitle,
-      item.company.name,
-      item.location,
-      item.stage,
-      item.appliedOn,
-      String(item.appliedDaysAgo),
+      item.job.title,
+      item.job.company.name,
+      item.job.location,
+      statusLabel[item.status],
+      shortDate(item.createdAt),
+      String(item.daysAgo),
       item.source,
-      item.salary,
-      item.nextStep,
+      item.nextStep ?? "",
     ]
       .map(escape)
-      .join(",")
+      .join(","),
   );
 
   return [COLUMNS.join(","), ...rows].join("\r\n");
 }
 
-export function ApplicationsActions() {
+export function ApplicationsActions({
+  applications,
+}: {
+  applications: Application[];
+}) {
   const exportCsv = () => {
-    const blob = new Blob([toCsv()], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([toCsv(applications)], {
+      type: "text/csv;charset=utf-8;",
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;

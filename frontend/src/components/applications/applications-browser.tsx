@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   Ban,
@@ -15,17 +16,18 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { ApplicationBoard } from "@/components/applications/application-board";
 import {
+  ApplicationBoard,
+  STAGE_PROGRESS,
+} from "@/components/applications/application-board";
+import {
+  BOARD_STAGES,
   StageBadge,
   stageDot,
 } from "@/components/applications/stage-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  DataTable,
-  DataTableColumnHeader,
-} from "@/components/ui/data-table";
+import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,207 +37,200 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { mutate } from "@/lib/client-api";
 import {
-  applications,
-  applicationStages,
   companyHref,
-  jobForApplication,
+  initialsOf,
   jobHref,
-  type Application,
-  type ApplicationStage,
-} from "@/lib/mock-data";
+  logoClass,
+  shortDate,
+  statusLabel,
+} from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { Application, ApplicationStatus } from "@/types/api";
 
-const columns: ColumnDef<Application>[] = [
-  {
-    accessorKey: "jobTitle",
-    meta: { label: "Role" },
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Role" />
-    ),
-    cell: ({ row }) => {
-      const item = row.original;
-      const job = jobForApplication(item);
-
-      return (
-        <div className="flex items-center gap-2.5">
-          <span
-            className={cn(
-              "flex size-8 shrink-0 items-center justify-center rounded-lg font-heading text-[11px] font-semibold",
-              item.company.logoClass
-            )}
-            aria-hidden
-          >
-            {item.company.initials}
-          </span>
-          <div className="grid leading-tight">
-            {job ? (
+function buildColumns(onWithdraw: (id: string, title: string, company: string) => void) {
+  const columns: ColumnDef<Application>[] = [
+    {
+      id: "role",
+      accessorFn: (row) => row.job.title,
+      meta: { label: "Role" },
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Role" />,
+      cell: ({ row }) => {
+        const item = row.original;
+        return (
+          <div className="flex items-center gap-2.5">
+            <span
+              className={cn(
+                "flex size-8 shrink-0 items-center justify-center rounded-lg font-heading text-[11px] font-semibold",
+                logoClass(item.job.company.id)
+              )}
+              aria-hidden
+            >
+              {initialsOf(item.job.company.name)}
+            </span>
+            <div className="grid leading-tight">
               <Link
-                href={jobHref(job)}
+                href={jobHref(item.job)}
                 className="rounded-sm font-medium hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
               >
-                {item.jobTitle}
+                {item.job.title}
               </Link>
-            ) : (
-              <span className="font-medium">{item.jobTitle}</span>
-            )}
-            <span className="text-xs text-muted-foreground">
-              {item.company.name} · {item.location}
-            </span>
+              <span className="text-xs text-muted-foreground">
+                {item.job.company.name} · {item.job.location}
+              </span>
+            </div>
           </div>
-        </div>
-      );
+        );
+      },
     },
-  },
-  {
-    accessorKey: "stage",
-    meta: { label: "Stage" },
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Stage" />
-    ),
-    cell: ({ row }) => <StageBadge stage={row.original.stage} />,
-  },
-  {
-    accessorKey: "progress",
-    meta: { label: "Progress" },
-    size: 190,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Progress" />
-    ),
-    cell: ({ row }) => (
-      <div className="w-44">
-        <Progress value={row.original.progress} />
-        <span className="mt-1.5 block text-xs whitespace-normal text-muted-foreground">
-          {row.original.lastUpdate}
+    {
+      accessorKey: "status",
+      meta: { label: "Stage" },
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Stage" />,
+      cell: ({ row }) => <StageBadge stage={row.original.status} />,
+    },
+    {
+      id: "progress",
+      accessorFn: (row) => STAGE_PROGRESS[row.status] ?? 0,
+      meta: { label: "Progress" },
+      size: 190,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Progress" />
+      ),
+      cell: ({ row }) => (
+        <div className="w-44">
+          <Progress value={STAGE_PROGRESS[row.original.status] ?? 0} />
+          <span className="mt-1.5 block text-xs whitespace-normal text-muted-foreground">
+            {row.original.lastUpdate ?? "No updates yet"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "nextStep",
+      meta: { label: "Next step" },
+      header: "Next step",
+      cell: ({ row }) => (
+        <span className="whitespace-normal text-muted-foreground">
+          {row.original.nextStep ?? "—"}
         </span>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "nextStep",
-    meta: { label: "Next step" },
-    header: "Next step",
-    cell: ({ row }) => (
-      <span className="whitespace-normal text-muted-foreground">
-        {row.original.nextStep}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "source",
-    meta: { label: "Source" },
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Source" />
-    ),
-    cell: ({ row }) => (
-      <span className="text-xs text-muted-foreground">
-        {row.original.source}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "appliedDaysAgo",
-    meta: { label: "Applied" },
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Applied" />
-    ),
-    cell: ({ row }) => (
-      <div className="grid leading-tight">
-        <span className="font-mono text-xs tabular-nums">
-          {row.original.appliedOn}
+      ),
+    },
+    {
+      accessorKey: "source",
+      meta: { label: "Source" },
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Source" />
+      ),
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground capitalize">
+          {row.original.source.toLowerCase().replace("_", " ")}
         </span>
-        <span className="text-xs text-muted-foreground">
-          {row.original.appliedDaysAgo}d ago
-        </span>
-      </div>
-    ),
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    header: "",
-    cell: ({ row }) => {
-      const item = row.original;
-      const job = jobForApplication(item);
-
-      return (
-        <div className="flex justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={`Actions for ${item.jobTitle}`}
-              >
-                <MoreHorizontal />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {job && (
+      ),
+    },
+    {
+      accessorKey: "daysAgo",
+      meta: { label: "Applied" },
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Applied" />
+      ),
+      cell: ({ row }) => (
+        <div className="grid leading-tight">
+          <span className="font-mono text-xs tabular-nums">
+            {shortDate(row.original.createdAt)}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {row.original.daysAgo}d ago
+          </span>
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      header: "",
+      cell: ({ row }) => {
+        const item = row.original;
+        return (
+          <div className="flex justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Actions for ${item.job.title}`}
+                >
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link href={jobHref(job)}>
+                  <Link href={jobHref(item.job)}>
                     <ExternalLink />
                     View the role
                   </Link>
                 </DropdownMenuItem>
-              )}
-              <DropdownMenuItem asChild>
-                <Link href={companyHref(item.company)}>
-                  <Building2 />
-                  View company
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => toast("Draft opened", { description: `Message to ${item.company.name}` })}
-              >
-                <MessageSquare />
-                Message recruiter
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => toast("Reminder set for tomorrow")}
-              >
-                <Bell />
-                Remind me to follow up
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={() =>
-                  toast(`Withdrew from ${item.jobTitle}`, {
-                    description: `${item.company.name} has been notified.`,
-                  })
-                }
-              >
-                <Ban />
-                Withdraw application
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      );
+                <DropdownMenuItem asChild>
+                  <Link href={companyHref(item.job.company)}>
+                    <Building2 />
+                    View company
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/messages">
+                    <MessageSquare />
+                    Message recruiter
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => toast("Reminder set for tomorrow")}
+                >
+                  <Bell />
+                  Remind me to follow up
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() =>
+                    onWithdraw(item.id, item.job.title, item.job.company.name)
+                  }
+                >
+                  <Ban />
+                  Withdraw application
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        );
+      },
     },
-  },
-];
+  ];
 
-export function ApplicationsBrowser() {
-  const [stage, setStage] = useState<ApplicationStage | "all">("all");
+  return columns;
+}
+
+export function ApplicationsBrowser({ applications }: { applications: Application[] }) {
+  const router = useRouter();
+  const [stage, setStage] = useState<ApplicationStatus | "all">("all");
   const [view, setView] = useState("list");
 
-  const counts = useMemo(
-    () =>
-      applicationStages.map((name) => ({
-        name,
-        count: applications.filter((item) => item.stage === name).length,
-      })),
-    []
-  );
+  const withdraw = async (id: string, title: string, company: string) => {
+    await mutate(`/applications/${id}/withdraw`, "PATCH");
+    router.refresh();
+    toast(`Withdrew from ${title}`, { description: `${company} has been notified.` });
+  };
 
-  const items = useMemo(
-    () =>
-      stage === "all"
-        ? applications
-        : applications.filter((item) => item.stage === stage),
-    [stage]
-  );
+  const columns = useMemo(() => buildColumns(withdraw), []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const counts = BOARD_STAGES.map((name) => ({
+    name,
+    count: applications.filter((item) => item.status === name).length,
+  }));
+
+  const items =
+    stage === "all"
+      ? applications
+      : applications.filter((item) => item.status === stage);
 
   return (
     <div className="grid gap-4">
@@ -249,7 +244,7 @@ export function ApplicationsBrowser() {
         {counts.map((entry) => (
           <StageTile
             key={entry.name}
-            label={entry.name}
+            label={statusLabel[entry.name]}
             count={entry.count}
             dot={stageDot[entry.name]}
             active={stage === entry.name}
@@ -297,7 +292,7 @@ export function ApplicationsBrowser() {
             <DataTable
               columns={columns}
               data={items}
-              searchColumn="jobTitle"
+              searchColumn="role"
               searchPlaceholder="Search by role"
               pageSize={8}
               showViewOptions
@@ -330,9 +325,7 @@ function StageTile({
       aria-pressed={active}
       className={cn(
         "grid gap-1 rounded-xl bg-card px-3 py-2.5 text-left ring-1 transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
-        active
-          ? "ring-2 ring-primary"
-          : "ring-foreground/10 hover:bg-muted/60"
+        active ? "ring-2 ring-primary" : "ring-foreground/10 hover:bg-muted/60"
       )}
     >
       <span className="flex items-center gap-1.5 text-xs text-muted-foreground">

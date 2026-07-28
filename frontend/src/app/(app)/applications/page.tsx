@@ -12,7 +12,9 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Card, CardContent } from "@/components/ui/card";
-import { applicationInsights } from "@/lib/mock-data";
+import { getApplicationInsights, getApplications } from "@/lib/queries";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Applications — HireLoop",
@@ -20,7 +22,38 @@ export const metadata: Metadata = {
     "Track every application, what stage it is at, and what needs your attention next.",
 };
 
-export default function ApplicationsPage() {
+export default async function ApplicationsPage() {
+  const [applications, insights] = await Promise.all([
+    getApplications(),
+    getApplicationInsights(),
+  ]);
+
+  const tiles = [
+    {
+      label: "Response rate",
+      value: `${insights?.responseRate ?? 0}%`,
+      hint: `${insights?.total ?? 0} applications sent`,
+    },
+    {
+      label: "Median time to first reply",
+      value:
+        insights?.medianDaysToFirstReply == null
+          ? "—"
+          : `${insights.medianDaysToFirstReply} days`,
+      hint: "across all applications",
+    },
+    {
+      label: "Interview conversion",
+      value: `${insights?.interviewRate ?? 0}%`,
+      hint: "reached interview or offer",
+    },
+    {
+      label: "Needs your attention",
+      value: `${insights?.needsAttention ?? 0}`,
+      hint: "no reply in over three weeks",
+    },
+  ];
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5">
       <Breadcrumb>
@@ -43,32 +76,31 @@ export default function ApplicationsPage() {
             Applications
           </h1>
           <p className="text-sm text-muted-foreground">
-            Four need your attention: one offer to answer, one take-home due,
-            and two with no reply in over three weeks.
+            {insights?.needsAttention ?? 0} need your attention, and{" "}
+            {applications.filter((a) => a.status === "OFFER").length} offer to
+            answer.
           </p>
         </div>
-        <ApplicationsActions />
+        <ApplicationsActions applications={applications} />
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {applicationInsights.map((insight) => (
-          <Card key={insight.label} size="sm">
+        {tiles.map((tile) => (
+          <Card key={tile.label} size="sm">
             <CardContent className="grid gap-1.5">
               <span className="text-xs tracking-wide text-muted-foreground uppercase">
-                {insight.label}
+                {tile.label}
               </span>
               <span className="font-heading text-2xl leading-none font-semibold tabular-nums">
-                {insight.value}
+                {tile.value}
               </span>
-              <span className="text-xs text-muted-foreground">
-                {insight.hint}
-              </span>
+              <span className="text-xs text-muted-foreground">{tile.hint}</span>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <ApplicationsBrowser />
+      <ApplicationsBrowser applications={applications} />
     </div>
   );
 }
