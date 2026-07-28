@@ -12,7 +12,9 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { companyDirectory } from "@/lib/mock-data";
+import { getCompanies, getJobs } from "@/lib/queries";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Companies — HireLoop",
@@ -20,9 +22,13 @@ export const metadata: Metadata = {
     "Browse companies hiring on HireLoop, filter by industry, size and rating.",
 };
 
-export default function CompaniesPage() {
-  const directory = companyDirectory();
-  const totalRoles = directory.reduce((sum, entry) => sum + entry.openRoles, 0);
+export default async function CompaniesPage() {
+  const [{ items: companies }, { items: jobs }] = await Promise.all([
+    getCompanies({ limit: 100 }),
+    getJobs({ limit: 100 }),
+  ]);
+
+  const totalRoles = companies.reduce((sum, entry) => sum + entry.openRoles, 0);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5">
@@ -47,7 +53,7 @@ export default function CompaniesPage() {
           </h1>
           <p className="text-sm text-muted-foreground">
             <span className="font-mono text-foreground tabular-nums">
-              {directory.length}
+              {companies.length}
             </span>{" "}
             companies hiring, with{" "}
             <span className="font-mono text-foreground tabular-nums">
@@ -64,7 +70,7 @@ export default function CompaniesPage() {
         </Button>
       </header>
 
-      <CompanyBrowser />
+      <CompanyBrowser companies={companies} jobs={jobs} />
     </div>
   );
 }

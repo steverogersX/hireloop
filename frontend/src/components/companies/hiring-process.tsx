@@ -1,6 +1,6 @@
-import type { ProcessStep } from "@/lib/mock-data";
+type Step = { step: string; detail: string; duration?: string | null };
 
-export function HiringProcess({ steps }: { steps: ProcessStep[] }) {
+export function HiringProcess({ steps }: { steps: Step[] }) {
   return (
     <ol className="grid gap-4">
       {steps.map((step, index) => (

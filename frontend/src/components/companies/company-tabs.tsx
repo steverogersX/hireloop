@@ -16,26 +16,17 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type {
-  Company,
-  CompanyCulture,
-  CompanyProfile,
-  Job,
-} from "@/lib/mock-data";
+import type { CompanyDetail, ScoredJob } from "@/types/api";
 
 export function CompanyTabs({
   company,
-  profile,
-  culture,
   openRoles,
-  techStack,
 }: {
-  company: Company;
-  profile: CompanyProfile;
-  culture: CompanyCulture;
-  openRoles: Job[];
-  techStack: string[];
+  company: CompanyDetail;
+  openRoles: ScoredJob[];
 }) {
+  const profile = company.profile;
+
   return (
     <Tabs defaultValue="overview" className="gap-3">
       <TabsList>
@@ -50,7 +41,7 @@ export function CompanyTabs({
         <TabsTrigger value="reviews">
           Reviews
           <Badge variant="secondary" className="ml-1.5 font-mono">
-            {culture.reviews.length}
+            {company.reviews.length}
           </Badge>
         </TabsTrigger>
       </TabsList>
@@ -62,84 +53,88 @@ export function CompanyTabs({
           </CardHeader>
           <CardContent className="grid gap-5">
             <p className="text-sm leading-relaxed text-muted-foreground">
-              {profile.about}
+              {profile?.about ?? company.description}
             </p>
 
-            <div className="grid gap-2">
-              <h2 className="font-heading text-sm font-medium">
-                How they work
-              </h2>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {culture.values.map((value) => (
-                  <div
-                    key={value.title}
-                    className="rounded-lg bg-muted/60 p-3 ring-1 ring-foreground/5"
-                  >
-                    <p className="text-sm font-medium">{value.title}</p>
-                    <p className="mt-0.5 text-sm text-muted-foreground">
-                      {value.detail}
-                    </p>
-                  </div>
-                ))}
+            {profile && profile.values.length > 0 && (
+              <div className="grid gap-2">
+                <h2 className="font-heading text-sm font-medium">How they work</h2>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {profile.values.map((value) => (
+                    <div
+                      key={value.title}
+                      className="rounded-lg bg-muted/60 p-3 ring-1 ring-foreground/5"
+                    >
+                      <p className="text-sm font-medium">{value.title}</p>
+                      <p className="mt-0.5 text-sm text-muted-foreground">
+                        {value.detail}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="grid gap-2">
-              <h2 className="font-heading text-sm font-medium">
-                Tools across their open roles
-              </h2>
-              <div className="flex flex-wrap gap-1.5">
-                {techStack.map((skill) => (
-                  <Badge key={skill} variant="secondary">
-                    {skill}
-                  </Badge>
-                ))}
+            {company.techStack.length > 0 && (
+              <div className="grid gap-2">
+                <h2 className="font-heading text-sm font-medium">
+                  Tools across their open roles
+                </h2>
+                <div className="flex flex-wrap gap-1.5">
+                  {company.techStack.map((skill) => (
+                    <Badge key={skill} variant="secondary">
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>What they offer</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="grid gap-2">
-                {profile.benefits.map((benefit) => (
-                  <li key={benefit} className="flex items-start gap-2 text-sm">
-                    <Check className="mt-0.5 size-4 shrink-0 text-chart-5" />
-                    <span className="text-muted-foreground">{benefit}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+          {profile && profile.benefits.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>What they offer</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="grid gap-2">
+                  {profile.benefits.map((benefit) => (
+                    <li key={benefit} className="flex items-start gap-2 text-sm">
+                      <Check className="mt-0.5 size-4 shrink-0 text-chart-5" />
+                      <span className="text-muted-foreground">{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Where they work</CardTitle>
-              <CardDescription>
-                Headcount by location, updated this quarter
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-2.5">
-              {culture.offices.map((office) => (
-                <div
-                  key={office.city}
-                  className="flex items-center justify-between gap-2 text-sm"
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <Building2 className="size-4 text-muted-foreground" />
-                    {office.city}
-                  </span>
-                  <span className="font-mono text-xs text-muted-foreground tabular-nums">
-                    {office.people}
-                  </span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          {profile && profile.offices.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Where they work</CardTitle>
+                <CardDescription>Headcount by location</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-2.5">
+                {profile.offices.map((office) => (
+                  <div
+                    key={office.city}
+                    className="flex items-center justify-between gap-2 text-sm"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <Building2 className="size-4 text-muted-foreground" />
+                      {office.city}
+                    </span>
+                    <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                      {office.people}
+                    </span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </TabsContent>
 
@@ -159,48 +154,51 @@ export function CompanyTabs({
           <CardHeader>
             <CardTitle>How they hire</CardTitle>
             <CardDescription>
-              {profile.process.length} steps · typically{" "}
-              {profile.process.at(-1)?.duration.toLowerCase()} end to end
+              {company.process.length} steps · typically{" "}
+              {company.process.at(-1)?.duration?.toLowerCase() ?? "a few weeks"} end
+              to end
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <HiringProcess steps={profile.process} />
+            <HiringProcess steps={company.process} />
           </CardContent>
         </Card>
       </TabsContent>
 
       <TabsContent value="reviews" className="grid gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>How employees rate them</CardTitle>
-            <CardDescription>
-              Verified reviews from people who worked here
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
-            {culture.ratings.map((rating) => (
-              <div key={rating.label} className="grid gap-1.5">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-sm">{rating.label}</span>
-                  <span className="font-mono text-xs text-muted-foreground tabular-nums">
-                    {(rating.score / 20).toFixed(1)}
-                  </span>
+        {profile && profile.ratingBreakdown.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>How employees rate them</CardTitle>
+              <CardDescription>
+                Verified reviews from people who worked here
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 sm:grid-cols-2">
+              {profile.ratingBreakdown.map((rating) => (
+                <div key={rating.label} className="grid gap-1.5">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-sm">{rating.label}</span>
+                    <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                      {(rating.score / 20).toFixed(1)}
+                    </span>
+                  </div>
+                  <Progress value={rating.score} />
                 </div>
-                <Progress value={rating.score} />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
-        {culture.reviews.length === 0 ? (
+        {company.reviews.length === 0 ? (
           <div className="grid justify-items-center gap-2 rounded-xl border border-dashed px-6 py-12 text-center">
             <MessageSquareQuote className="size-5 text-muted-foreground" />
             <p className="font-heading text-sm font-medium">
               No written reviews yet
             </p>
             <p className="max-w-sm text-sm text-muted-foreground">
-              The ratings above come from exit surveys. Worked here? Yours would
-              be the first review other candidates read.
+              The ratings above come from exit surveys. Worked here? Yours would be
+              the first review other candidates read.
             </p>
             <Button
               size="sm"
@@ -215,13 +213,11 @@ export function CompanyTabs({
             </Button>
           </div>
         ) : (
-          culture.reviews.map((review) => (
+          company.reviews.map((review) => (
             <Card key={review.id}>
               <CardContent className="grid gap-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-heading text-sm font-medium">
-                    {review.title}
-                  </p>
+                  <p className="font-heading text-sm font-medium">{review.title}</p>
                   <span
                     className="inline-flex items-center gap-0.5"
                     aria-label={`${review.rating} out of 5`}
@@ -240,7 +236,7 @@ export function CompanyTabs({
                 </div>
                 <p className="text-sm text-muted-foreground">{review.body}</p>
                 <p className="text-xs text-muted-foreground">
-                  {review.role} · {review.author} · {review.when}
+                  {review.roleTitle} · Verified employee
                 </p>
               </CardContent>
             </Card>

@@ -21,27 +21,16 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useFollowedCompanies } from "@/hooks/use-follows";
-import {
-  companyDirectory,
-  industryFacets,
-  sizeBands,
-  type DirectoryEntry,
-} from "@/lib/mock-data";
-import { cn } from "@/lib/utils";
+import { sizeBand, sizeBands } from "@/lib/format";
+import type { CompanyListItem, ScoredJob } from "@/types/api";
 
-const directory = companyDirectory();
-const industries = industryFacets();
-
-const sorters: Record<string, (a: DirectoryEntry, b: DirectoryEntry) => number> =
-  {
-    roles: (a, b) => b.openRoles - a.openRoles,
-    rating: (a, b) => b.company.rating - a.company.rating,
-    match: (a, b) => b.bestMatch - a.bestMatch,
-    name: (a, b) => a.company.name.localeCompare(b.company.name),
-  };
-
-export function CompanyBrowser() {
+export function CompanyBrowser({
+  companies,
+  jobs,
+}: {
+  companies: CompanyListItem[];
+  jobs: ScoredJob[];
+}) {
   const [query, setQuery] = useState("");
   const [pickedIndustries, setPickedIndustries] = useState<string[]>([]);
   const [bands, setBands] = useState<string[]>([]);
@@ -50,39 +39,57 @@ export function CompanyBrowser() {
   const [followedOnly, setFollowedOnly] = useState(false);
   const [sort, setSort] = useState("roles");
   const [view, setView] = useState("grid");
-  const followed = useFollowedCompanies();
 
-  const toggle = (
-    value: string,
-    list: string[],
-    set: (next: string[]) => void
-  ) =>
+  const skillsByCompany = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const job of jobs) {
+      const existing = map.get(job.companyId) ?? [];
+      map.set(job.companyId, [...new Set([...existing, ...job.skills])].slice(0, 4));
+    }
+    return map;
+  }, [jobs]);
+
+  const industries = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const company of companies) {
+      if (!company.industry) continue;
+      counts.set(company.industry, (counts.get(company.industry) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([industry, count]) => ({ industry, count }));
+  }, [companies]);
+
+  const toggle = (value: string, list: string[], set: (next: string[]) => void) =>
     set(
-      list.includes(value)
-        ? list.filter((item) => item !== value)
-        : [...list, value]
+      list.includes(value) ? list.filter((item) => item !== value) : [...list, value],
     );
 
   const results = useMemo(
     () =>
-      directory
-        .filter((entry) => {
+      companies
+        .filter((company) => {
           const haystack =
-            `${entry.company.name} ${entry.company.industry} ${entry.company.hq} ${entry.culture.tagline}`.toLowerCase();
+            `${company.name} ${company.industry ?? ""} ${company.location ?? ""} ${company.profile?.tagline ?? ""}`.toLowerCase();
           if (query && !haystack.includes(query.toLowerCase())) return false;
           if (
             pickedIndustries.length &&
-            !pickedIndustries.includes(entry.company.industry)
+            !pickedIndustries.includes(company.industry ?? "")
           )
             return false;
-          if (bands.length && !bands.includes(entry.band)) return false;
-          if (entry.company.rating < minRating) return false;
-          if (hiringOnly && entry.openRoles === 0) return false;
-          if (followedOnly && !followed.has(entry.company.id)) return false;
+          if (bands.length && !bands.includes(sizeBand(company.size))) return false;
+          if ((company.profile?.rating ?? 0) / 10 < minRating) return false;
+          if (hiringOnly && company.openRoles === 0) return false;
+          if (followedOnly && !company.following) return false;
           return true;
         })
-        .sort(sorters[sort]),
-    [query, pickedIndustries, bands, minRating, hiringOnly, followedOnly, followed, sort]
+        .sort((a, b) => {
+          if (sort === "rating")
+            return (b.profile?.rating ?? 0) - (a.profile?.rating ?? 0);
+          if (sort === "name") return a.name.localeCompare(b.name);
+          return b.openRoles - a.openRoles;
+        }),
+    [companies, query, pickedIndustries, bands, minRating, hiringOnly, followedOnly, sort],
   );
 
   const chips = [
@@ -97,9 +104,7 @@ export function CompanyBrowser() {
     ...(minRating > 0
       ? [{ label: `${minRating.toFixed(1)}+ rating`, clear: () => setMinRating(0) }]
       : []),
-    ...(hiringOnly
-      ? [{ label: "Hiring now", clear: () => setHiringOnly(false) }]
-      : []),
+    ...(hiringOnly ? [{ label: "Hiring now", clear: () => setHiringOnly(false) }] : []),
     ...(followedOnly
       ? [{ label: "Following only", clear: () => setFollowedOnly(false) }]
       : []),
@@ -152,9 +157,7 @@ export function CompanyBrowser() {
             <Separator />
 
             <div className="grid gap-2">
-              <Label className="text-xs text-muted-foreground">
-                Company size
-              </Label>
+              <Label className="text-xs text-muted-foreground">Company size</Label>
               {sizeBands.map((band) => (
                 <label
                   key={band}
@@ -166,7 +169,7 @@ export function CompanyBrowser() {
                   />
                   <span className="flex-1">{band}</span>
                   <span className="font-mono text-xs text-muted-foreground tabular-nums">
-                    {directory.filter((entry) => entry.band === band).length}
+                    {companies.filter((c) => sizeBand(c.size) === band).length}
                   </span>
                 </label>
               ))}
@@ -261,7 +264,6 @@ export function CompanyBrowser() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="roles">Most open roles</SelectItem>
-                <SelectItem value="match">Best match for you</SelectItem>
                 <SelectItem value="rating">Highest rated</SelectItem>
                 <SelectItem value="name">Name A–Z</SelectItem>
               </SelectContent>
@@ -297,13 +299,17 @@ export function CompanyBrowser() {
             </Button>
           </div>
         ) : view === "grid" ? (
-          <div className={cn("grid gap-3 md:grid-cols-2 2xl:grid-cols-3")}>
-            {results.map((entry) => (
-              <CompanyCard key={entry.company.id} entry={entry} />
+          <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+            {results.map((company) => (
+              <CompanyCard
+                key={company.id}
+                company={company}
+                topSkills={skillsByCompany.get(company.id) ?? []}
+              />
             ))}
           </div>
         ) : (
-          <CompaniesTable entries={results} />
+          <CompaniesTable companies={results} />
         )}
       </div>
     </div>

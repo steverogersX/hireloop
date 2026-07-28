@@ -7,12 +7,17 @@ import { FollowButton } from "@/components/companies/follow-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { companyHref, type DirectoryEntry } from "@/lib/mock-data";
+import { companyHref, initialsOf, logoClass } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { CompanyListItem } from "@/types/api";
 
-export function CompanyCard({ entry }: { entry: DirectoryEntry }) {
-  const { company, culture, openRoles, topSkills } = entry;
-
+export function CompanyCard({
+  company,
+  topSkills,
+}: {
+  company: CompanyListItem;
+  topSkills: string[];
+}) {
   return (
     <Card className="group transition-shadow hover:ring-foreground/20">
       <CardContent className="flex h-full flex-col gap-3">
@@ -20,11 +25,11 @@ export function CompanyCard({ entry }: { entry: DirectoryEntry }) {
           <span
             className={cn(
               "flex size-11 shrink-0 items-center justify-center rounded-xl font-heading text-sm font-semibold",
-              company.logoClass
+              logoClass(company.id)
             )}
             aria-hidden
           >
-            {company.initials}
+            {initialsOf(company.name)}
           </span>
           <div className="min-w-0 flex-1">
             <Link
@@ -34,12 +39,12 @@ export function CompanyCard({ entry }: { entry: DirectoryEntry }) {
               {company.name}
             </Link>
             <p className="truncate text-xs text-muted-foreground">
-              {culture.tagline}
+              {company.profile?.tagline ?? company.description}
             </p>
           </div>
           <span className="inline-flex shrink-0 items-center gap-1 font-mono text-xs tabular-nums">
             <Star className="size-3.5 fill-chart-2 text-chart-2" />
-            {company.rating}
+            {((company.profile?.rating ?? 0) / 10).toFixed(1)}
           </span>
         </div>
 
@@ -50,7 +55,7 @@ export function CompanyCard({ entry }: { entry: DirectoryEntry }) {
           </span>
           <span className="inline-flex items-center gap-1">
             <MapPin className="size-3.5" />
-            {company.hq}
+            {company.location}
           </span>
           <span className="inline-flex items-center gap-1">
             <Users className="size-3.5" />
@@ -58,22 +63,25 @@ export function CompanyCard({ entry }: { entry: DirectoryEntry }) {
           </span>
         </p>
 
-        <div className="flex flex-wrap gap-1.5">
-          {topSkills.map((skill) => (
-            <Badge key={skill} variant="outline">
-              {skill}
-            </Badge>
-          ))}
-        </div>
+        {topSkills.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {topSkills.map((skill) => (
+              <Badge key={skill} variant="outline">
+                {skill}
+              </Badge>
+            ))}
+          </div>
+        )}
 
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t pt-3">
           <Badge className="bg-chart-5/12 text-chart-5">
-            {openRoles} open {openRoles === 1 ? "role" : "roles"}
+            {company.openRoles} open {company.openRoles === 1 ? "role" : "roles"}
           </Badge>
           <div className="flex items-center gap-1.5">
             <FollowButton
               companyId={company.id}
               companyName={company.name}
+              following={company.following}
               size="sm"
             />
             <Button variant="outline" size="sm" asChild>

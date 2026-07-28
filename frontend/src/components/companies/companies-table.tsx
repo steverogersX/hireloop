@@ -6,33 +6,30 @@ import { Star } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DataTable,
-  DataTableColumnHeader,
-} from "@/components/ui/data-table";
-import { companyHref, type DirectoryEntry } from "@/lib/mock-data";
+import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
+import { companyHref, initialsOf, logoClass, sizeBand } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { CompanyListItem } from "@/types/api";
 
-const columns: ColumnDef<DirectoryEntry>[] = [
+const columns: ColumnDef<CompanyListItem>[] = [
   {
-    id: "name",
+    accessorKey: "name",
     meta: { label: "Company" },
-    accessorFn: (entry) => entry.company.name,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Company" />
     ),
     cell: ({ row }) => {
-      const { company, culture } = row.original;
+      const company = row.original;
       return (
         <div className="flex items-center gap-2.5">
           <span
             className={cn(
               "flex size-8 shrink-0 items-center justify-center rounded-lg font-heading text-[11px] font-semibold",
-              company.logoClass
+              logoClass(company.id)
             )}
             aria-hidden
           >
-            {company.initials}
+            {initialsOf(company.name)}
           </span>
           <div className="grid leading-tight">
             <Link
@@ -42,7 +39,7 @@ const columns: ColumnDef<DirectoryEntry>[] = [
               {company.name}
             </Link>
             <span className="max-w-64 truncate text-xs text-muted-foreground">
-              {culture.tagline}
+              {company.profile?.tagline ?? company.description}
             </span>
           </div>
         </div>
@@ -50,58 +47,49 @@ const columns: ColumnDef<DirectoryEntry>[] = [
     },
   },
   {
-    id: "industry",
+    accessorKey: "industry",
     meta: { label: "Industry" },
-    accessorFn: (entry) => entry.company.industry,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Industry" />
     ),
     cell: ({ row }) => (
-      <span className="text-muted-foreground">
-        {row.original.company.industry}
-      </span>
+      <span className="text-muted-foreground">{row.original.industry}</span>
     ),
   },
   {
-    id: "hq",
+    accessorKey: "location",
     meta: { label: "Headquarters" },
-    accessorFn: (entry) => entry.company.hq,
     header: "Headquarters",
     cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.company.hq}</span>
+      <span className="text-muted-foreground">{row.original.location}</span>
     ),
   },
   {
     id: "size",
     meta: { label: "Size" },
-    accessorFn: (entry) => entry.band,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Size" />
-    ),
+    accessorFn: (row) => sizeBand(row.size),
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Size" />,
     cell: ({ row }) => (
       <span className="font-mono text-xs text-muted-foreground tabular-nums">
-        {row.original.company.size}
+        {row.original.size}
       </span>
     ),
   },
   {
     id: "rating",
     meta: { label: "Rating" },
-    accessorFn: (entry) => entry.company.rating,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Rating" />
-    ),
+    accessorFn: (row) => row.profile?.rating ?? 0,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Rating" />,
     cell: ({ row }) => (
       <span className="inline-flex items-center gap-1 font-mono text-sm tabular-nums">
         <Star className="size-3.5 fill-chart-2 text-chart-2" />
-        {row.original.company.rating}
+        {((row.original.profile?.rating ?? 0) / 10).toFixed(1)}
       </span>
     ),
   },
   {
-    id: "openRoles",
+    accessorKey: "openRoles",
     meta: { label: "Open roles" },
-    accessorFn: (entry) => entry.openRoles,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Open roles" />
     ),
@@ -118,18 +106,18 @@ const columns: ColumnDef<DirectoryEntry>[] = [
     cell: ({ row }) => (
       <div className="flex justify-end">
         <Button variant="outline" size="sm" asChild>
-          <Link href={companyHref(row.original.company)}>View</Link>
+          <Link href={companyHref(row.original)}>View</Link>
         </Button>
       </div>
     ),
   },
 ];
 
-export function CompaniesTable({ entries }: { entries: DirectoryEntry[] }) {
+export function CompaniesTable({ companies }: { companies: CompanyListItem[] }) {
   return (
     <DataTable
       columns={columns}
-      data={entries}
+      data={companies}
       pageSize={8}
       showViewOptions
       emptyMessage="No companies match these filters."
