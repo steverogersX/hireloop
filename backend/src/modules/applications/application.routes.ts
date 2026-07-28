@@ -28,6 +28,13 @@ applicationRouter.get(
 );
 
 applicationRouter.get(
+  "/me/:id",
+  requireRole("CANDIDATE"),
+  validate({ params: applicationIdParamSchema }),
+  controller.detail,
+);
+
+applicationRouter.get(
   "/company",
   requireRole("EMPLOYER", "ADMIN"),
   validate({ query: listApplicationsQuerySchema }),

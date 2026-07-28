@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth, requireRole } from "@/middleware/auth";
+import { optionalAuth, requireAuth, requireRole } from "@/middleware/auth";
 import { validate } from "@/middleware/validate";
 import * as controller from "./job.controller";
 import {
@@ -12,9 +12,25 @@ import {
 
 export const jobRouter = Router();
 
-jobRouter.get("/", validate({ query: listJobsQuerySchema }), controller.list);
+jobRouter.get(
+  "/",
+  optionalAuth,
+  validate({ query: listJobsQuerySchema }),
+  controller.list,
+);
 jobRouter.get("/mine", requireAuth, requireRole("EMPLOYER", "ADMIN"), controller.listMine);
-jobRouter.get("/:slug", validate({ params: jobSlugParamSchema }), controller.getBySlug);
+jobRouter.get(
+  "/:slug",
+  optionalAuth,
+  validate({ params: jobSlugParamSchema }),
+  controller.getBySlug,
+);
+jobRouter.get(
+  "/:slug/similar",
+  optionalAuth,
+  validate({ params: jobSlugParamSchema }),
+  controller.similar,
+);
 
 jobRouter.post(
   "/",

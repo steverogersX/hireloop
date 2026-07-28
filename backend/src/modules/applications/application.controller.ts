@@ -29,6 +29,16 @@ export const listForCompany = asyncHandler<CompanyApplication[], unknown, ListAp
   },
 );
 
+export const detail = asyncHandler<
+  applicationService.ApplicationDetail,
+  unknown,
+  unknown,
+  IdParams
+>(async (req, res) => {
+  const application = await applicationService.getMyApplication(req.user!.sub, req.params.id);
+  return success(res, application, "Application fetched");
+});
+
 export const updateStatus = asyncHandler<
   Application,
   UpdateApplicationStatusInput,

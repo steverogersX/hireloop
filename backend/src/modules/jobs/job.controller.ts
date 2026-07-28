@@ -10,20 +10,26 @@ export const create = asyncHandler<Job, CreateJobInput>(async (req, res) => {
   return created(res, job, "Job created");
 });
 
-export const list = asyncHandler<Job[], unknown, ListJobsQuery>(async (req, res) => {
-  const result = await jobService.listJobs(req.query);
-  return paginated(res, result, "Jobs fetched");
-});
+export const list = asyncHandler<jobService.ScoredJob[], unknown, ListJobsQuery>(
+  async (req, res) => {
+    const result = await jobService.listJobs(req.query, req.user?.sub);
+    return paginated(res, result, "Jobs fetched");
+  },
+);
 
-export const getBySlug = asyncHandler<
-  Awaited<ReturnType<typeof jobService.getJobBySlug>>,
-  unknown,
-  unknown,
-  SlugParams
->(async (req, res) => {
-  const job = await jobService.getJobBySlug(req.params.slug);
-  return success(res, job, "Job fetched");
-});
+export const getBySlug = asyncHandler<jobService.JobDetail, unknown, unknown, SlugParams>(
+  async (req, res) => {
+    const job = await jobService.getJobBySlug(req.params.slug, req.user?.sub);
+    return success(res, job, "Job fetched");
+  },
+);
+
+export const similar = asyncHandler<jobService.ScoredJob[], unknown, unknown, SlugParams>(
+  async (req, res) => {
+    const items = await jobService.similarJobs(req.params.slug, req.user?.sub);
+    return success(res, items, "Similar jobs fetched");
+  },
+);
 
 export const listMine = asyncHandler<Job[]>(async (req, res) => {
   const items = await jobService.listCompanyJobs(req.user!.sub);

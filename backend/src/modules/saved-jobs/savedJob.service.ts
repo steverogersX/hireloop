@@ -1,38 +1,84 @@
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, type SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { jobs, savedJobs } from "@/db/schema";
+import { jobs, savedJobs, users } from "@/db/schema";
 import { ApiError } from "@/utils/ApiError";
 import { buildMeta } from "@/utils/ApiResponse";
-import type { ListSavedJobsQuery, SaveJobInput } from "./savedJob.schema";
+import { matchJob } from "@/utils/match";
+import type {
+  ListSavedJobsQuery,
+  SaveJobInput,
+  UpdateSavedJobInput,
+} from "./savedJob.schema";
 
 export async function saveJob(userId: string, input: SaveJobInput) {
   const job = await db.query.jobs.findFirst({ where: eq(jobs.id, input.jobId) });
   if (!job) throw ApiError.notFound("Job not found");
 
-  const existing = await db.query.savedJobs.findFirst({
-    where: and(eq(savedJobs.jobId, input.jobId), eq(savedJobs.userId, userId)),
-  });
-  if (existing) return existing;
+  const [saved] = await db
+    .insert(savedJobs)
+    .values({ jobId: input.jobId, userId, folder: input.folder, note: input.note })
+    .onConflictDoUpdate({
+      target: [savedJobs.jobId, savedJobs.userId],
+      set: { folder: input.folder, note: input.note },
+    })
+    .returning();
 
-  const [saved] = await db.insert(savedJobs).values({ jobId: input.jobId, userId }).returning();
   return saved!;
 }
 
 export async function listSavedJobs(userId: string, query: ListSavedJobsQuery) {
-  const where = eq(savedJobs.userId, userId);
+  const filters: SQL[] = [eq(savedJobs.userId, userId)];
+  if (query.folder) filters.push(eq(savedJobs.folder, query.folder));
+  const where = and(...filters);
 
-  const [items, [totals]] = await Promise.all([
+  const [rows, [totals], candidate] = await Promise.all([
     db.query.savedJobs.findMany({
       where,
       with: { job: { with: { company: true } } },
       orderBy: desc(savedJobs.createdAt),
-      limit: query.limit,
-      offset: (query.page - 1) * query.limit,
     }),
     db.select({ value: count() }).from(savedJobs).where(where),
+    db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { location: true, headline: true },
+      with: { profile: true },
+    }),
   ]);
 
-  return { items, meta: buildMeta(query.page, query.limit, totals?.value ?? 0) };
+  let items = rows.map((row) => ({ ...row, match: matchJob(row.job, candidate ?? null) }));
+
+  if (query.q) {
+    const term = query.q.toLowerCase();
+    items = items.filter((row) =>
+      `${row.job.title} ${row.job.company.name} ${row.note ?? ""}`
+        .toLowerCase()
+        .includes(term),
+    );
+  }
+  if (query.sort === "match") {
+    items.sort((a, b) => b.match.score - a.match.score);
+  }
+
+  const start = (query.page - 1) * query.limit;
+
+  return {
+    items: items.slice(start, start + query.limit),
+    meta: buildMeta(query.page, query.limit, query.q ? items.length : (totals?.value ?? 0)),
+  };
+}
+
+export async function updateSavedJob(
+  userId: string,
+  jobId: string,
+  input: UpdateSavedJobInput,
+) {
+  const [row] = await db
+    .update(savedJobs)
+    .set(input)
+    .where(and(eq(savedJobs.jobId, jobId), eq(savedJobs.userId, userId)))
+    .returning();
+  if (!row) throw ApiError.notFound("Saved job not found");
+  return row;
 }
 
 export async function unsaveJob(userId: string, jobId: string): Promise<void> {
