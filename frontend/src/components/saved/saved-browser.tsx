@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Clock3, NotebookPen, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,50 +17,64 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { savedFolders, savedJobs } from "@/lib/mock-data";
+import { mutate } from "@/lib/client-api";
+import { folderLabel, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { SavedFolder, SavedJob, ScoredJob } from "@/types/api";
 
-const rows = savedJobs();
+const FOLDERS: SavedFolder[] = ["SHORTLIST", "MAYBE", "RESEARCHING"];
 
-export function SavedBrowser() {
+function toScored(row: SavedJob): ScoredJob {
+  return {
+    ...row.job,
+    match: row.match,
+    applicantCount: 0,
+    saved: true,
+    applied: false,
+  };
+}
+
+export function SavedBrowser({ saved }: { saved: SavedJob[] }) {
+  const router = useRouter();
   const [folder, setFolder] = useState<string>("all");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("recent");
-  const [removed, setRemoved] = useState<string[]>([]);
-
-  const kept = rows.filter((row) => !removed.includes(row.job.id));
 
   const results = useMemo(() => {
-    const filtered = kept.filter(({ entry, job }) => {
-      if (folder !== "all" && entry.folder !== folder) return false;
+    const filtered = saved.filter((row) => {
+      if (folder !== "all" && row.folder !== folder) return false;
       if (!query) return true;
-      const haystack =
-        `${job.title} ${job.company.name} ${entry.note}`.toLowerCase();
-      return haystack.includes(query.toLowerCase());
+      return `${row.job.title} ${row.job.company.name} ${row.note ?? ""}`
+        .toLowerCase()
+        .includes(query.toLowerCase());
     });
 
     return [...filtered].sort((a, b) => {
-      if (sort === "match") return b.job.matchScore - a.job.matchScore;
-      if (sort === "closing")
-        return (a.entry.closingIn ? 0 : 1) - (b.entry.closingIn ? 0 : 1);
-      return a.entry.daysAgo - b.entry.daysAgo;
+      if (sort === "match") return b.match.score - a.match.score;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-  }, [kept, folder, query, sort]);
+  }, [saved, folder, query, sort]);
+
+  const remove = async (jobId: string, title: string) => {
+    await mutate(`/saved-jobs/${jobId}`, "DELETE");
+    router.refresh();
+    toast(`Removed ${title} from saved`);
+  };
 
   return (
     <div className="grid gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <FolderChip
           label="All"
-          count={kept.length}
+          count={saved.length}
           active={folder === "all"}
           onClick={() => setFolder("all")}
         />
-        {savedFolders.map((name) => (
+        {FOLDERS.map((name) => (
           <FolderChip
             key={name}
-            label={name}
-            count={kept.filter((row) => row.entry.folder === name).length}
+            label={folderLabel[name]}
+            count={saved.filter((row) => row.folder === name).length}
             active={folder === name}
             onClick={() => setFolder(name)}
           />
@@ -83,56 +98,52 @@ export function SavedBrowser() {
           <SelectContent>
             <SelectItem value="recent">Recently saved</SelectItem>
             <SelectItem value="match">Best match</SelectItem>
-            <SelectItem value="closing">Closing soonest</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {results.length === 0 ? (
         <div className="grid justify-items-center gap-2 rounded-xl border border-dashed px-6 py-16 text-center">
-          <p className="font-heading text-sm font-medium">
-            Nothing saved here yet
-          </p>
+          <p className="font-heading text-sm font-medium">Nothing saved here yet</p>
           <p className="max-w-sm text-sm text-muted-foreground">
-            Save a role from the feed and it lands in this folder with a note
-            you can write yourself.
+            Save a role from the feed and it lands in this folder with a note you
+            can write yourself.
           </p>
           <Button size="sm" className="mt-1" asChild>
             <Link href="/jobs">Browse open roles</Link>
           </Button>
         </div>
       ) : (
-        results.map(({ entry, job }) => (
-          <div key={job.id} className="grid gap-2">
+        results.map((row) => (
+          <div key={row.id} className="grid gap-2">
             <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-muted-foreground">
-              <Badge variant="outline">{entry.folder}</Badge>
-              <span>Saved {entry.savedOn}</span>
-              {entry.closingIn && (
-                <span className="inline-flex items-center gap-1 text-chart-4">
+              <Badge variant="outline">{folderLabel[row.folder]}</Badge>
+              <span>Saved {shortDate(row.createdAt)}</span>
+              {row.job.publishedAt && (
+                <span className="inline-flex items-center gap-1">
                   <Clock3 className="size-3.5" />
-                  {entry.closingIn}
+                  Posted {shortDate(row.job.publishedAt)}
                 </span>
               )}
               <Button
                 variant="ghost"
                 size="xs"
                 className="ml-auto"
-                onClick={() => {
-                  setRemoved((prev) => [...prev, job.id]);
-                  toast(`Removed ${job.title} from saved`);
-                }}
+                onClick={() => remove(row.jobId, row.job.title)}
               >
                 <Trash2 />
                 Remove
               </Button>
             </div>
 
-            <JobCard job={job} />
+            <JobCard job={toScored(row)} />
 
-            <p className="flex items-start gap-2 rounded-lg bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
-              <NotebookPen className="mt-0.5 size-3.5 shrink-0" />
-              {entry.note}
-            </p>
+            {row.note && (
+              <p className="flex items-start gap-2 rounded-lg bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
+                <NotebookPen className="mt-0.5 size-3.5 shrink-0" />
+                {row.note}
+              </p>
+            )}
           </div>
         ))
       )}

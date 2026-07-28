@@ -8,20 +8,25 @@ import { MatchRing } from "@/components/dashboard/match-ring";
 import { ApplySheet } from "@/components/jobs/job-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
 import {
-  DataTable,
-  DataTableColumnHeader,
-} from "@/components/ui/data-table";
-import { annualSalary, formatSalary, jobHref, type Job } from "@/lib/mock-data";
+  annualSalary,
+  employmentLabel,
+  formatSalary,
+  initialsOf,
+  jobHref,
+  logoClass,
+  relativeTime,
+  workModeLabel,
+} from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { ScoredJob } from "@/types/api";
 
-const columns: ColumnDef<Job>[] = [
+const columns: ColumnDef<ScoredJob>[] = [
   {
     accessorKey: "title",
     meta: { label: "Role" },
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Role" />
-    ),
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Role" />,
     cell: ({ row }) => {
       const job = row.original;
       return (
@@ -29,11 +34,11 @@ const columns: ColumnDef<Job>[] = [
           <span
             className={cn(
               "flex size-8 shrink-0 items-center justify-center rounded-lg font-heading text-[11px] font-semibold",
-              job.company.logoClass
+              logoClass(job.company.id)
             )}
             aria-hidden
           >
-            {job.company.initials}
+            {initialsOf(job.company.name)}
           </span>
           <div className="grid leading-tight">
             <Link
@@ -54,9 +59,7 @@ const columns: ColumnDef<Job>[] = [
                 </Badge>
               )}
             </Link>
-            <span className="text-xs text-muted-foreground">
-              {job.company.name}
-            </span>
+            <span className="text-xs text-muted-foreground">{job.company.name}</span>
           </div>
         </div>
       );
@@ -72,7 +75,8 @@ const columns: ColumnDef<Job>[] = [
       <div className="grid leading-tight">
         <span>{row.original.location}</span>
         <span className="text-xs text-muted-foreground">
-          {row.original.workplace} · {row.original.employment}
+          {workModeLabel[row.original.workMode]} ·{" "}
+          {employmentLabel[row.original.employmentType]}
         </span>
       </div>
     ),
@@ -81,9 +85,7 @@ const columns: ColumnDef<Job>[] = [
     id: "salary",
     meta: { label: "Salary" },
     accessorFn: (job) => annualSalary(job),
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Salary" />
-    ),
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Salary" />,
     cell: ({ row }) => (
       <span className="font-mono text-sm tabular-nums">
         {formatSalary(row.original)}
@@ -91,34 +93,34 @@ const columns: ColumnDef<Job>[] = [
     ),
   },
   {
-    accessorKey: "applicants",
+    accessorKey: "applicantCount",
     meta: { label: "Applicants" },
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Applicants" />
     ),
     cell: ({ row }) => (
       <span className="font-mono text-sm text-muted-foreground tabular-nums">
-        {row.original.applicants}
+        {row.original.applicantCount}
       </span>
     ),
   },
   {
-    accessorKey: "postedAgo",
+    id: "posted",
     meta: { label: "Posted" },
+    accessorFn: (job) => job.publishedAt,
     header: "Posted",
     cell: ({ row }) => (
       <span className="text-xs text-muted-foreground">
-        {row.original.postedAgo}
+        {relativeTime(row.original.publishedAt)}
       </span>
     ),
   },
   {
-    accessorKey: "matchScore",
+    id: "match",
     meta: { label: "Match" },
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Match" />
-    ),
-    cell: ({ row }) => <MatchRing score={row.original.matchScore} size={34} />,
+    accessorFn: (job) => job.match.score,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Match" />,
+    cell: ({ row }) => <MatchRing score={row.original.match.score} size={34} />,
   },
   {
     id: "actions",
@@ -138,7 +140,7 @@ const columns: ColumnDef<Job>[] = [
   },
 ];
 
-export function JobsTable({ jobs }: { jobs: Job[] }) {
+export function JobsTable({ jobs }: { jobs: ScoredJob[] }) {
   return (
     <DataTable
       columns={columns}

@@ -21,14 +21,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { formatSalary, type Job } from "@/lib/mock-data";
+import { formatSalary } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { ScoredJob } from "@/types/api";
 
 export function JobActions({
   job,
   className,
 }: {
-  job: Job;
+  job: ScoredJob;
   className?: string;
 }) {
   const [saved, setSaved] = useState(job.saved);
@@ -74,7 +75,7 @@ export function ApplySheet({
   job,
   trigger,
 }: {
-  job: Job;
+  job: ScoredJob;
   trigger?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -140,7 +141,7 @@ export function ReportListingButton({ title }: { title: string }) {
   );
 }
 
-export function StickyApplyBar({ job }: { job: Job }) {
+export function StickyApplyBar({ job }: { job: ScoredJob }) {
   return (
     <div className="sticky bottom-0 z-10 -mx-4 mt-2 flex items-center gap-3 border-t bg-background/90 px-4 py-3 backdrop-blur-md sm:-mx-5 sm:px-5 xl:hidden">
       <div className="min-w-0 flex-1">

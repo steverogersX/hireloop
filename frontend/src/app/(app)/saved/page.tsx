@@ -20,16 +20,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { savedJobs, savedSearches } from "@/lib/mock-data";
+import { relativeTime } from "@/lib/format";
+import { getSavedJobs, getSavedSearches } from "@/lib/queries";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Saved jobs — HireLoop",
   description: "Roles you saved, the notes you left, and your saved searches.",
 };
 
-export default function SavedPage() {
-  const rows = savedJobs();
-  const closing = rows.filter((row) => row.entry.closingIn).length;
+export default async function SavedPage() {
+  const [saved, searches] = await Promise.all([getSavedJobs(), getSavedSearches()]);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5">
@@ -54,9 +56,9 @@ export default function SavedPage() {
           </h1>
           <p className="text-sm text-muted-foreground">
             <span className="font-mono text-foreground tabular-nums">
-              {rows.length}
+              {saved.length}
             </span>{" "}
-            roles saved, {closing} closing within two weeks.
+            roles saved across your folders.
           </p>
         </div>
         <Button asChild>
@@ -69,19 +71,22 @@ export default function SavedPage() {
 
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_21rem]">
         <div className="min-w-0">
-          <SavedBrowser />
+          <SavedBrowser saved={saved} />
         </div>
 
         <aside className="grid gap-4 xl:sticky xl:top-18">
           <Card>
             <CardHeader>
               <CardTitle>Saved searches</CardTitle>
-              <CardDescription>
-                Filters you kept, re-run every morning
-              </CardDescription>
+              <CardDescription>Filters you kept</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-1">
-              {savedSearches.map((search) => (
+              {searches.length === 0 && (
+                <p className="px-2 py-4 text-sm text-muted-foreground">
+                  Save a search from the jobs page to keep it here.
+                </p>
+              )}
+              {searches.map((search) => (
                 <Link
                   key={search.id}
                   href="/jobs"
@@ -89,17 +94,12 @@ export default function SavedPage() {
                 >
                   <span className="flex items-center gap-2 text-sm font-medium">
                     {search.name}
-                    {search.newCount > 0 && (
-                      <Badge className="bg-chart-5/12 font-mono text-chart-5">
-                        {search.newCount} new
-                      </Badge>
-                    )}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {search.detail}
+                    <Badge className="bg-chart-5/12 font-mono text-chart-5">
+                      saved
+                    </Badge>
                   </span>
                   <span className="font-mono text-xs text-muted-foreground">
-                    {search.runAt}
+                    Last run {relativeTime(search.lastRunAt)}
                   </span>
                 </Link>
               ))}
@@ -110,8 +110,7 @@ export default function SavedPage() {
             <CardHeader>
               <CardTitle>Turn a search into an alert</CardTitle>
               <CardDescription>
-                Get matching roles the morning they are posted, instead of
-                checking back.
+                Get matching roles the morning they are posted.
               </CardDescription>
             </CardHeader>
             <CardContent>

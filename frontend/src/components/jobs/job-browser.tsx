@@ -2,15 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  BellPlus,
-  LayoutList,
-  MapPin,
-  Rows3,
-  Search,
-  SlidersHorizontal,
-  X,
-} from "lucide-react";
+import { BellPlus, LayoutList, MapPin, Rows3, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { JobCard } from "@/components/dashboard/job-card";
@@ -27,14 +19,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
@@ -47,18 +31,23 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { mutate } from "@/lib/client-api";
 import {
   annualSalary,
-  companyFacets,
-  jobs,
-  postedHours,
-  skillFacets,
-  type Job,
-} from "@/lib/mock-data";
+  employmentLabel,
+  experienceLabel,
+  workModeLabel,
+} from "@/lib/format";
+import type {
+  EmploymentType,
+  ExperienceLevel,
+  ScoredJob,
+  WorkMode,
+} from "@/types/api";
 
-const WORKPLACES = ["Remote", "Hybrid", "On-site"];
-const TYPES = ["Full-time", "Contract", "Part-time", "Internship"];
-const LEVELS = ["Junior", "Mid", "Senior", "Staff", "Lead"];
+const WORKPLACES: WorkMode[] = ["REMOTE", "HYBRID", "ONSITE"];
+const TYPES: EmploymentType[] = ["FULL_TIME", "CONTRACT", "PART_TIME", "INTERNSHIP"];
+const LEVELS: ExperienceLevel[] = ["INTERN", "ENTRY", "MID", "SENIOR", "LEAD"];
 const POSTED = [
   { value: "any", label: "Any time" },
   { value: "24", label: "Last 24 hours" },
@@ -66,9 +55,6 @@ const POSTED = [
   { value: "720", label: "Last month" },
 ];
 const PER_PAGE = 6;
-
-const facetCompanies = companyFacets();
-const facetSkills = skillFacets(8);
 
 type Filters = {
   query: string;
@@ -100,35 +86,39 @@ const EMPTY: Filters = {
   hideApplied: false,
 };
 
-function matches(job: Job, f: Filters) {
+function hoursSince(value: string | null) {
+  if (!value) return Number.MAX_SAFE_INTEGER;
+  return (Date.now() - new Date(value).getTime()) / 3_600_000;
+}
+
+function matches(job: ScoredJob, f: Filters) {
   const haystack =
-    `${job.title} ${job.company.name} ${job.skills.join(" ")} ${job.summary}`.toLowerCase();
+    `${job.title} ${job.company.name} ${job.skills.join(" ")} ${job.summary ?? ""}`.toLowerCase();
 
   if (f.query && !haystack.includes(f.query.toLowerCase())) return false;
   if (f.where && !job.location.toLowerCase().includes(f.where.toLowerCase()))
     return false;
-  if (f.workplaces.length && !f.workplaces.includes(job.workplace)) return false;
-  if (f.types.length && !f.types.includes(job.employment)) return false;
-  if (f.levels.length && !f.levels.includes(job.seniority)) return false;
+  if (f.workplaces.length && !f.workplaces.includes(job.workMode)) return false;
+  if (f.types.length && !f.types.includes(job.employmentType)) return false;
+  if (f.levels.length && !f.levels.includes(job.experienceLevel)) return false;
   if (f.companies.length && !f.companies.includes(job.company.id)) return false;
-  if (f.skills.length && !f.skills.every((s) => job.skills.includes(s)))
-    return false;
+  if (f.skills.length && !f.skills.every((s) => job.skills.includes(s))) return false;
   if (annualSalary(job) < f.minSalary) return false;
-  if (job.matchScore < f.minMatch) return false;
-  if (f.posted !== "any" && postedHours(job) > Number(f.posted)) return false;
+  if (job.match.score < f.minMatch) return false;
+  if (f.posted !== "any" && hoursSince(job.publishedAt) > Number(f.posted)) return false;
   if (f.easyOnly && !job.easyApply) return false;
   if (f.hideApplied && job.applied) return false;
   return true;
 }
 
-const sorters: Record<string, (a: Job, b: Job) => number> = {
-  match: (a, b) => b.matchScore - a.matchScore,
-  newest: (a, b) => postedHours(a) - postedHours(b),
+const sorters: Record<string, (a: ScoredJob, b: ScoredJob) => number> = {
+  match: (a, b) => b.match.score - a.match.score,
+  newest: (a, b) => hoursSince(a.publishedAt) - hoursSince(b.publishedAt),
   salary: (a, b) => annualSalary(b) - annualSalary(a),
-  competition: (a, b) => a.applicants - b.applicants,
+  competition: (a, b) => a.applicantCount - b.applicantCount,
 };
 
-export function JobBrowser() {
+export function JobBrowser({ jobs }: { jobs: ScoredJob[] }) {
   const router = useRouter();
   const params = useSearchParams();
   const [filters, setFilters] = useState<Filters>({
@@ -140,12 +130,40 @@ export function JobBrowser() {
   const [view, setView] = useState("list");
   const [page, setPage] = useState(1);
 
+  const facetCompanies = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; count: number }>();
+    for (const job of jobs) {
+      const entry = map.get(job.company.id) ?? {
+        id: job.company.id,
+        name: job.company.name,
+        count: 0,
+      };
+      entry.count += 1;
+      map.set(job.company.id, entry);
+    }
+    return [...map.values()].sort((a, b) => b.count - a.count);
+  }, [jobs]);
+
+  const facetSkills = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const job of jobs) {
+      for (const skill of job.skills) counts.set(skill, (counts.get(skill) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([skill, count]) => ({ skill, count }));
+  }, [jobs]);
+
   const set = <K extends keyof Filters>(key: K, value: Filters[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setPage(1);
   };
 
-  const toggle = (key: "workplaces" | "types" | "levels" | "companies" | "skills", value: string) => {
+  const toggle = (
+    key: "workplaces" | "types" | "levels" | "companies" | "skills",
+    value: string,
+  ) => {
     setFilters((prev) => ({
       ...prev,
       [key]: prev[key].includes(value)
@@ -157,7 +175,7 @@ export function JobBrowser() {
 
   const results = useMemo(
     () => jobs.filter((job) => matches(job, filters)).sort(sorters[sort]),
-    [filters, sort]
+    [jobs, filters, sort],
   );
 
   const totalPages = Math.max(1, Math.ceil(results.length / PER_PAGE));
@@ -165,16 +183,25 @@ export function JobBrowser() {
   const visible = results.slice((current - 1) * PER_PAGE, current * PER_PAGE);
 
   const chips = [
-    ...filters.workplaces.map((v) => ({ label: v, clear: () => toggle("workplaces", v) })),
-    ...filters.types.map((v) => ({ label: v, clear: () => toggle("types", v) })),
-    ...filters.levels.map((v) => ({ label: v, clear: () => toggle("levels", v) })),
+    ...filters.workplaces.map((v) => ({
+      label: workModeLabel[v as WorkMode],
+      clear: () => toggle("workplaces", v),
+    })),
+    ...filters.types.map((v) => ({
+      label: employmentLabel[v as EmploymentType],
+      clear: () => toggle("types", v),
+    })),
+    ...filters.levels.map((v) => ({
+      label: experienceLabel[v as ExperienceLevel],
+      clear: () => toggle("levels", v),
+    })),
     ...filters.skills.map((v) => ({ label: v, clear: () => toggle("skills", v) })),
     ...filters.companies.map((id) => ({
-      label: facetCompanies.find((c) => c.company.id === id)?.company.name ?? id,
+      label: facetCompanies.find((c) => c.id === id)?.name ?? id,
       clear: () => toggle("companies", id),
     })),
     ...(filters.minSalary > 0
-      ? [{ label: `€${filters.minSalary / 1000}k+`, clear: () => set("minSalary", 0) }]
+      ? [{ label: `${filters.minSalary / 1000}k+`, clear: () => set("minSalary", 0) }]
       : []),
     ...(filters.minMatch > 0
       ? [{ label: `Match ${filters.minMatch}+`, clear: () => set("minMatch", 0) }]
@@ -222,12 +249,10 @@ export function JobBrowser() {
           <Button
             className="sm:w-32"
             onClick={() => {
-              const params = new URLSearchParams();
-              if (filters.query) params.set("q", filters.query);
-              if (filters.where) params.set("where", filters.where);
-              router.replace(params.size ? `/jobs?${params}` : "/jobs", {
-                scroll: false,
-              });
+              const next = new URLSearchParams();
+              if (filters.query) next.set("q", filters.query);
+              if (filters.where) next.set("where", filters.where);
+              router.replace(next.size ? `/jobs?${next}` : "/jobs", { scroll: false });
               toast(`${results.length} roles match`);
             }}
           >
@@ -242,10 +267,7 @@ export function JobBrowser() {
           <Card>
             <CardContent className="grid gap-1">
               <div className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 text-sm font-medium">
-                  <SlidersHorizontal className="size-4" />
-                  Filters
-                </span>
+                <span className="text-sm font-medium">Filters</span>
                 {chips.length > 0 && (
                   <Button
                     variant="ghost"
@@ -268,8 +290,8 @@ export function JobBrowser() {
                   {WORKPLACES.map((option) => (
                     <FacetCheck
                       key={option}
-                      label={option}
-                      count={jobs.filter((j) => j.workplace === option).length}
+                      label={workModeLabel[option]}
+                      count={jobs.filter((j) => j.workMode === option).length}
                       checked={filters.workplaces.includes(option)}
                       onChange={() => toggle("workplaces", option)}
                     />
@@ -280,8 +302,8 @@ export function JobBrowser() {
                   {TYPES.map((option) => (
                     <FacetCheck
                       key={option}
-                      label={option}
-                      count={jobs.filter((j) => j.employment === option).length}
+                      label={employmentLabel[option]}
+                      count={jobs.filter((j) => j.employmentType === option).length}
                       checked={filters.types.includes(option)}
                       onChange={() => toggle("types", option)}
                     />
@@ -292,8 +314,8 @@ export function JobBrowser() {
                   {LEVELS.map((option) => (
                     <FacetCheck
                       key={option}
-                      label={option}
-                      count={jobs.filter((j) => j.seniority === option).length}
+                      label={experienceLabel[option]}
+                      count={jobs.filter((j) => j.experienceLevel === option).length}
                       checked={filters.levels.includes(option)}
                       onChange={() => toggle("levels", option)}
                     />
@@ -310,7 +332,7 @@ export function JobBrowser() {
                         <span className="font-mono text-xs tabular-nums">
                           {filters.minSalary === 0
                             ? "Any"
-                            : `€${filters.minSalary / 1000}k`}
+                            : `${filters.minSalary / 1000}k`}
                         </span>
                       </div>
                       <Slider
@@ -366,11 +388,11 @@ export function JobBrowser() {
                 </FacetGroup>
 
                 <FacetGroup value="company" label="Company">
-                  {facetCompanies.map(({ company, count }) => (
+                  {facetCompanies.map((company) => (
                     <FacetCheck
                       key={company.id}
                       label={company.name}
-                      count={count}
+                      count={company.count}
                       checked={filters.companies.includes(company.id)}
                       onChange={() => toggle("companies", company.id)}
                     />
@@ -384,10 +406,7 @@ export function JobBrowser() {
                     className="gap-2 py-1"
                   >
                     {POSTED.map((option) => (
-                      <div
-                        key={option.value}
-                        className="flex items-center gap-2"
-                      >
+                      <div key={option.value} className="flex items-center gap-2">
                         <RadioGroupItem
                           value={option.value}
                           id={`posted-${option.value}`}
@@ -433,11 +452,18 @@ export function JobBrowser() {
                 variant="outline"
                 size="sm"
                 className="mt-1"
-                onClick={() =>
+                onClick={async () => {
+                  await mutate("/alerts", "POST", {
+                    query: filters.query || "Frontend roles",
+                    location: filters.where || undefined,
+                    frequency: "DAILY",
+                    channels: ["EMAIL"],
+                  });
+                  router.refresh();
                   toast.success("Alert created", {
                     description: "You will get matching roles every morning.",
-                  })
-                }
+                  });
+                }}
               >
                 <BellPlus />
                 Alert me about this search
@@ -509,8 +535,7 @@ export function JobBrowser() {
                 No roles match every filter
               </p>
               <p className="max-w-sm text-sm text-muted-foreground">
-                Loosen the salary floor or drop a filter. We will alert you when
-                something matching turns up.
+                Loosen the salary floor or drop a filter.
               </p>
               <Button
                 size="sm"
@@ -532,52 +557,27 @@ export function JobBrowser() {
           )}
 
           {view === "list" && totalPages > 1 && (
-            <Pagination className="mt-1">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    aria-disabled={current === 1}
-                    className={
-                      current === 1 ? "pointer-events-none opacity-50" : ""
-                    }
-                    onClick={(event) => {
-                      event.preventDefault();
-                      setPage(current - 1);
-                    }}
-                  />
-                </PaginationItem>
-                {Array.from({ length: totalPages }, (_, index) => (
-                  <PaginationItem key={index}>
-                    <PaginationLink
-                      href="#"
-                      isActive={current === index + 1}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        setPage(index + 1);
-                      }}
-                    >
-                      {index + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    aria-disabled={current === totalPages}
-                    className={
-                      current === totalPages
-                        ? "pointer-events-none opacity-50"
-                        : ""
-                    }
-                    onClick={(event) => {
-                      event.preventDefault();
-                      setPage(current + 1);
-                    }}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+            <div className="mx-auto flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={current === 1}
+                onClick={() => setPage(current - 1)}
+              >
+                Previous
+              </Button>
+              <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                {current} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={current === totalPages}
+                onClick={() => setPage(current + 1)}
+              >
+                Next
+              </Button>
+            </div>
           )}
         </div>
       </div>

@@ -13,6 +13,9 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { getJobs } from "@/lib/queries";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Find jobs — HireLoop",
@@ -20,7 +23,9 @@ export const metadata: Metadata = {
     "Filter open roles by workplace, level, salary and how well they match your profile.",
 };
 
-export default function JobsPage() {
+export default async function JobsPage() {
+  const { items } = await getJobs({ sort: "match", limit: 100 });
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5">
       <Breadcrumb>
@@ -43,8 +48,8 @@ export default function JobsPage() {
             Find jobs
           </h1>
           <p className="text-sm text-muted-foreground">
-            Every filter here is live. Scores are calculated against your
-            profile, not the job title.
+            Every filter here is live. Scores are calculated against your profile,
+            not the job title.
           </p>
         </div>
         <Button variant="outline" asChild>
@@ -56,7 +61,7 @@ export default function JobsPage() {
       </header>
 
       <Suspense fallback={null}>
-        <JobBrowser />
+        <JobBrowser jobs={items} />
       </Suspense>
     </div>
   );

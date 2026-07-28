@@ -1,8 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
 import { AlertCircle, Paperclip, Send } from "lucide-react";
 import { z } from "zod";
+
+import { mutate } from "@/lib/client-api";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -18,7 +21,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SheetClose, SheetFooter } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { candidate, type Job } from "@/lib/mock-data";
+import { currencySymbol } from "@/lib/format";
+import type { ScoredJob } from "@/types/api";
 
 const NOTE_LIMIT = 1200;
 
@@ -44,12 +48,13 @@ export function ApplyForm({
   job,
   onSubmitted,
 }: {
-  job: Job;
+  job: ScoredJob;
   onSubmitted: (values: ApplicationValues) => void;
 }) {
+  const router = useRouter();
   const form = useForm({
     defaultValues: {
-      resume: "priya-raman-frontend.pdf",
+      resume: "primary",
       note: "",
       start: "notice",
       salary: "",
@@ -58,7 +63,14 @@ export function ApplyForm({
     } as ApplicationValues,
     validators: { onChange: applicationSchema },
     onSubmit: async ({ value }) => {
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await mutate("/applications", "POST", {
+        jobId: job.id,
+        coverLetter: value.note || undefined,
+        salaryExpectation: Number(value.salary.replace(/\D/g, "")) || undefined,
+        availableFrom: value.start,
+        source: "DIRECT",
+      });
+      router.refresh();
       onSubmitted(value);
     },
   });
@@ -84,11 +96,11 @@ export function ApplyForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="priya-raman-frontend.pdf">
-                  priya-raman-frontend.pdf · updated 4 days ago
+                <SelectItem value="primary">
+                  Default resume on your profile
                 </SelectItem>
-                <SelectItem value="priya-raman-platform.pdf">
-                  priya-raman-platform.pdf · updated in June
+                <SelectItem value="platform">
+                  Platform resume
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -148,7 +160,7 @@ export function ApplyForm({
               <SelectContent>
                 <SelectItem value="immediately">Immediately</SelectItem>
                 <SelectItem value="notice">
-                  After {candidate.noticePeriod} notice
+                  After my notice period
                 </SelectItem>
                 <SelectItem value="two-months">In two months</SelectItem>
                 <SelectItem value="flexible">Flexible</SelectItem>
@@ -170,14 +182,15 @@ export function ApplyForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(event) => field.handleChange(event.target.value)}
-              placeholder={`${job.currency}${job.salaryMin.toLocaleString()}`}
+              placeholder={`${currencySymbol(job.currency)}${(job.salaryMin ?? 0).toLocaleString()}`}
               aria-invalid={!field.state.meta.isValid}
             />
-            <p className="text-xs text-muted-foreground">
-              This role is listed at {job.currency}
-              {job.salaryMin.toLocaleString()}–
-              {job.salaryMax.toLocaleString()}.
-            </p>
+            {job.salaryMin != null && job.salaryMax != null && (
+              <p className="text-xs text-muted-foreground">
+                This role is listed at {currencySymbol(job.currency)}
+                {job.salaryMin.toLocaleString()}–{job.salaryMax.toLocaleString()}.
+              </p>
+            )}
             <FieldError field={field} />
           </div>
         )}
