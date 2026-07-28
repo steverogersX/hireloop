@@ -29,10 +29,24 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  dayLabel,
+  initialsOf,
+  logoClass,
+  relativeTime,
+  timeLabel,
+} from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { activity, alerts, candidate, interviews } from "@/lib/mock-data";
+import type {
+  ActivityItem,
+  InterviewWithContext,
+  JobAlert,
+  ProfilePayload,
+} from "@/types/api";
 
-export function ProfileStrengthCard() {
+export function ProfileStrengthCard({ profile }: { profile: ProfilePayload }) {
+  const gaps = profile.strength.gaps.slice(0, 3);
+
   return (
     <Card>
       <CardHeader>
@@ -43,18 +57,16 @@ export function ProfileStrengthCard() {
       </CardHeader>
       <CardContent className="grid gap-3">
         <div className="flex items-center gap-3">
-          <MatchRing
-            score={candidate.profileStrength}
-            size={64}
-            label="ready"
-          />
+          <MatchRing score={profile.strength.score} size={64} label="ready" />
           <p className="text-sm text-muted-foreground">
-            Three steps left. Each one lifts how often you appear in search.
+            {gaps.length === 0
+              ? "Your profile is complete."
+              : `${gaps.length} step${gaps.length === 1 ? "" : "s"} left. Each one lifts how often you appear in search.`}
           </p>
         </div>
 
         <ul className="grid gap-1.5">
-          {candidate.profileGaps.map((gap) => (
+          {gaps.map((gap) => (
             <li key={gap.label}>
               <Link
                 href="/profile"
@@ -63,7 +75,7 @@ export function ProfileStrengthCard() {
                 <Plus className="size-3.5 text-muted-foreground" />
                 <span className="flex-1">{gap.label}</span>
                 <span className="font-mono text-xs text-chart-5">
-                  {gap.weight}
+                  +{gap.weight}%
                 </span>
               </Link>
             </li>
@@ -78,21 +90,33 @@ export function ProfileStrengthCard() {
   );
 }
 
-const modeIcon = { Video, Phone, "On-site": Handshake } as const;
+const modeIcon = { VIDEO: Video, PHONE: Phone, ONSITE: Handshake } as const;
 
-export function InterviewsCard() {
+export function InterviewsCard({
+  interviews,
+}: {
+  interviews: InterviewWithContext[];
+}) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Upcoming interviews</CardTitle>
-        <CardDescription>Next 7 days</CardDescription>
+        <CardDescription>Next 30 days</CardDescription>
         <CardAction>
-          <InterviewCalendarButton />
+          <InterviewCalendarButton count={interviews.length} />
         </CardAction>
       </CardHeader>
       <CardContent className="grid gap-3">
+        {interviews.length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            Nothing scheduled. Interviews appear here once a company books one.
+          </p>
+        )}
+
         {interviews.map((interview, index) => {
           const Icon = modeIcon[interview.mode];
+          const company = interview.application.job.company;
+
           return (
             <div key={interview.id} className="grid gap-2">
               {index > 0 && <Separator />}
@@ -100,43 +124,44 @@ export function InterviewsCard() {
                 <span
                   className={cn(
                     "flex size-9 shrink-0 items-center justify-center rounded-lg font-heading text-xs font-semibold",
-                    interview.company.logoClass
+                    logoClass(company.id)
                   )}
                   aria-hidden
                 >
-                  {interview.company.initials}
+                  {initialsOf(company.name)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">{interview.round}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {interview.role} · {interview.company.name}
+                    {interview.application.job.title} · {company.name}
                   </p>
                   <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-xs text-foreground tabular-nums">
-                    {interview.day} · {interview.time}
+                    {dayLabel(interview.scheduledAt)} ·{" "}
+                    {timeLabel(interview.scheduledAt)}
                     <span className="text-muted-foreground">
-                      {interview.duration}
+                      {interview.durationMins} min
                     </span>
                   </p>
-                  <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                    <Icon className="size-3.5" />
-                    {interview.interviewer} · {interview.interviewerTitle}
-                  </p>
+                  {interview.interviewerName && (
+                    <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                      <Icon className="size-3.5" />
+                      {interview.interviewerName} · {interview.interviewerTitle}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-1.5 pl-11.5">
-                {interview.status === "Confirmed" ? (
+                {interview.status === "CONFIRMED" ? (
                   <Badge className="bg-chart-5/12 text-chart-5">
                     <CircleCheck />
                     Confirmed
                   </Badge>
                 ) : (
-                  <Badge className="bg-chart-2/15 text-chart-2">
-                    Awaiting you
-                  </Badge>
+                  <Badge className="bg-chart-2/15 text-chart-2">Awaiting you</Badge>
                 )}
                 <InterviewActions
                   round={interview.round}
-                  company={interview.company.name}
+                  company={company.name}
                 />
               </div>
             </div>
@@ -147,12 +172,16 @@ export function InterviewsCard() {
   );
 }
 
-export function AlertsCard() {
+export function AlertsCard({ alerts }: { alerts: JobAlert[] }) {
+  const newRoles = alerts
+    .filter((alert) => alert.active)
+    .reduce((sum, alert) => sum + alert.newCount, 0);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Job alerts</CardTitle>
-        <CardDescription>16 new roles since Monday</CardDescription>
+        <CardDescription>{newRoles} new roles since Monday</CardDescription>
         <CardAction>
           <Button variant="ghost" size="icon-sm" aria-label="Create alert" asChild>
             <Link href="/alerts">
@@ -162,13 +191,13 @@ export function AlertsCard() {
         </CardAction>
       </CardHeader>
       <CardContent className="grid gap-2.5">
-        {alerts.map((alert) => (
+        {alerts.slice(0, 4).map((alert) => (
           <div key={alert.id} className="flex items-start gap-2.5">
             <Bell className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{alert.query}</p>
               <p className="truncate text-xs text-muted-foreground">
-                {alert.location} · {alert.frequency}
+                {alert.location ?? "Anywhere"} · {alert.frequency.toLowerCase()}
               </p>
             </div>
             {alert.newCount > 0 && (
@@ -176,7 +205,7 @@ export function AlertsCard() {
                 {alert.newCount} new
               </Badge>
             )}
-            <AlertToggle query={alert.query} active={alert.active} />
+            <AlertToggle id={alert.id} query={alert.query} active={alert.active} />
           </div>
         ))}
       </CardContent>
@@ -185,14 +214,14 @@ export function AlertsCard() {
 }
 
 const activityIcon = {
-  view: Sparkles,
-  stage: ArrowRight,
-  message: MessageSquare,
-  match: Sparkles,
-  invite: Mail,
+  VIEW: Sparkles,
+  STAGE: ArrowRight,
+  MESSAGE: MessageSquare,
+  MATCH: Sparkles,
+  INVITE: Mail,
 } as const;
 
-export function ActivityCard() {
+export function ActivityCard({ activity }: { activity: ActivityItem[] }) {
   return (
     <Card>
       <CardHeader>
@@ -212,7 +241,7 @@ export function ActivityCard() {
                 <p className="text-xs text-muted-foreground">{item.detail}</p>
               </div>
               <span className="shrink-0 font-mono text-xs text-muted-foreground tabular-nums">
-                {item.time}
+                {relativeTime(item.createdAt)}
               </span>
             </div>
           );

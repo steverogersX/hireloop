@@ -34,10 +34,22 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  companyHref,
+  employmentLabel,
+  experienceLabel,
+  formatSalary,
+  initialsOf,
+  jobHref,
+  logoClass,
+  relativeTime,
+  respondsIn,
+  workModeLabel,
+} from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { companyHref, formatSalary, jobHref, type Job } from "@/lib/mock-data";
+import type { ScoredJob } from "@/types/api";
 
-export function JobCard({ job }: { job: Job }) {
+export function JobCard({ job }: { job: ScoredJob }) {
   const [saved, setSaved] = useState(job.saved);
 
   return (
@@ -47,11 +59,11 @@ export function JobCard({ job }: { job: Job }) {
           <span
             className={cn(
               "flex size-10 shrink-0 items-center justify-center rounded-lg font-heading text-sm font-semibold",
-              job.company.logoClass
+              logoClass(job.company.id)
             )}
             aria-hidden
           >
-            {job.company.initials}
+            {initialsOf(job.company.name)}
           </span>
 
           <div className="min-w-0 flex-1">
@@ -91,7 +103,7 @@ export function JobCard({ job }: { job: Job }) {
               </span>
               <span className="inline-flex items-center gap-1">
                 <Clock3 className="size-3.5" />
-                {job.postedAgo}
+                {relativeTime(job.publishedAt)}
               </span>
             </p>
           </div>
@@ -99,24 +111,28 @@ export function JobCard({ job }: { job: Job }) {
           <Tooltip>
             <TooltipTrigger asChild>
               <div>
-                <MatchRing score={job.matchScore} />
+                <MatchRing score={job.match.score} />
               </div>
             </TooltipTrigger>
             <TooltipContent side="left" className="max-w-56">
               <p className="font-medium">Why this matches</p>
               <p className="text-xs opacity-80">
-                {job.matchReasons.join(" · ")}
+                {job.match.reasons.length
+                  ? job.match.reasons.join(" · ")
+                  : "Add more skills to your profile to lift this score"}
               </p>
             </TooltipContent>
           </Tooltip>
         </div>
 
-        <p className="text-sm text-muted-foreground">{job.summary}</p>
+        {job.summary && (
+          <p className="text-sm text-muted-foreground">{job.summary}</p>
+        )}
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant="secondary">{job.workplace}</Badge>
-          <Badge variant="secondary">{job.employment}</Badge>
-          <Badge variant="secondary">{job.seniority}</Badge>
+          <Badge variant="secondary">{workModeLabel[job.workMode]}</Badge>
+          <Badge variant="secondary">{employmentLabel[job.employmentType]}</Badge>
+          <Badge variant="secondary">{experienceLabel[job.experienceLevel]}</Badge>
           {job.skills.slice(0, 3).map((skill) => (
             <Badge key={skill} variant="outline">
               {skill}
@@ -137,9 +153,9 @@ export function JobCard({ job }: { job: Job }) {
             {job.equity && <span>Equity {job.equity}</span>}
             <span className="inline-flex items-center gap-1">
               <Users className="size-3.5" />
-              {job.applicants} applicants
+              {job.applicantCount} applicants
             </span>
-            <span>{job.respondsIn}</span>
+            <span>{respondsIn(job.respondsInDays)}</span>
           </div>
 
           <div className="flex items-center gap-1.5">
@@ -153,9 +169,7 @@ export function JobCard({ job }: { job: Job }) {
                 toast(saved ? "Removed from saved" : "Saved to your list");
               }}
             >
-              <Bookmark
-                className={cn(saved && "fill-current text-primary")}
-              />
+              <Bookmark className={cn(saved && "fill-current text-primary")} />
             </Button>
 
             <DropdownMenu>

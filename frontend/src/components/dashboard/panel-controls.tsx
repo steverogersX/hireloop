@@ -1,20 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { mutate } from "@/lib/client-api";
 
-export function InterviewCalendarButton() {
+export function InterviewCalendarButton({ count }: { count: number }) {
   return (
     <Button
       variant="ghost"
       size="icon-sm"
       aria-label="Add interviews to calendar"
       onClick={() =>
-        toast("Added 3 interviews to your calendar", {
+        toast(`Added ${count} interview${count === 1 ? "" : "s"} to your calendar`, {
           description: "Reminders go out a day and an hour before each one.",
         })
       }
@@ -60,19 +62,24 @@ export function InterviewActions({
 }
 
 export function AlertToggle({
+  id,
   query,
   active,
 }: {
+  id: string;
   query: string;
   active: boolean;
 }) {
+  const router = useRouter();
   const [on, setOn] = useState(active);
 
   return (
     <Switch
       checked={on}
-      onCheckedChange={(value) => {
+      onCheckedChange={async (value) => {
         setOn(value);
+        await mutate(`/alerts/${id}`, "PATCH", { active: value });
+        router.refresh();
         toast(value ? `"${query}" is on again` : `Paused "${query}"`);
       }}
       aria-label={`Alert for ${query}`}

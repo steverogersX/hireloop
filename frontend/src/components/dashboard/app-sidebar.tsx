@@ -36,7 +36,8 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { candidate } from "@/lib/mock-data";
+import { useShell } from "@/components/dashboard/shell-context";
+import { initialsOf } from "@/lib/format";
 
 type NavItem = {
   title: string;
@@ -71,6 +72,7 @@ function isCurrent(pathname: string, href?: string) {
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { user } = useShell();
 
   return (
     <Sidebar variant="inset" collapsible="icon">
@@ -147,15 +149,15 @@ export function AppSidebar() {
             <SidebarMenuButton size="lg" className="gap-2.5">
               <Avatar className="size-8 rounded-lg">
                 <AvatarFallback className="rounded-lg bg-primary/10 text-xs font-medium text-primary">
-                  {candidate.initials}
+                  {initialsOf(user?.name ?? "You")}
                 </AvatarFallback>
               </Avatar>
               <span className="grid text-left leading-tight">
                 <span className="truncate text-sm font-medium">
-                  {candidate.name}
+                  {user?.name ?? "Your account"}
                 </span>
                 <span className="truncate text-xs text-muted-foreground">
-                  {candidate.title}
+                  {user?.headline ?? ""}
                 </span>
               </span>
               <Badge

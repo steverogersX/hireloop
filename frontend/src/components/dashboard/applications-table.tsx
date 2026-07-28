@@ -1,13 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { StageBadge } from "@/components/applications/stage-badge";
-import {
-  DataTable,
-  DataTableColumnHeader,
-} from "@/components/ui/data-table";
+import { STAGE_PROGRESS } from "@/components/applications/application-board";
+import { BOARD_STAGES, StageBadge } from "@/components/applications/stage-badge";
+import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
 import { Progress } from "@/components/ui/progress";
 import {
   Select,
@@ -16,41 +15,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { initialsOf, jobHref, logoClass, shortDate, statusLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { applications, type Application, type ApplicationStage } from "@/lib/mock-data";
-
-const STAGES: ApplicationStage[] = [
-  "Applied",
-  "Screening",
-  "Interview",
-  "Offer",
-  "Rejected",
-];
+import type { Application } from "@/types/api";
 
 const columns: ColumnDef<Application>[] = [
   {
-    accessorKey: "jobTitle",
+    id: "role",
+    accessorFn: (row) => row.job.title,
     meta: { label: "Role" },
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Role" />
-    ),
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Role" />,
     cell: ({ row }) => {
-      const application = row.original;
+      const item = row.original;
       return (
         <div className="flex items-center gap-2.5">
           <span
             className={cn(
               "flex size-7 shrink-0 items-center justify-center rounded-md font-heading text-[11px] font-semibold",
-              application.company.logoClass
+              logoClass(item.job.company.id)
             )}
             aria-hidden
           >
-            {application.company.initials}
+            {initialsOf(item.job.company.name)}
           </span>
           <div className="grid leading-tight">
-            <span className="font-medium">{application.jobTitle}</span>
+            <Link
+              href={jobHref(item.job)}
+              className="rounded-sm font-medium hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            >
+              {item.job.title}
+            </Link>
             <span className="text-xs text-muted-foreground">
-              {application.company.name}
+              {item.job.company.name}
             </span>
           </div>
         </div>
@@ -58,17 +54,14 @@ const columns: ColumnDef<Application>[] = [
     },
   },
   {
-    accessorKey: "stage",
+    accessorKey: "status",
     meta: { label: "Stage" },
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Stage" />
-    ),
-    cell: ({ row }) => <StageBadge stage={row.original.stage} />,
-    filterFn: (row, id, value: string) =>
-      value === "all" || row.getValue(id) === value,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Stage" />,
+    cell: ({ row }) => <StageBadge stage={row.original.status} />,
   },
   {
-    accessorKey: "progress",
+    id: "progress",
+    accessorFn: (row) => STAGE_PROGRESS[row.status] ?? 0,
     meta: { label: "Progress" },
     size: 180,
     header: ({ column }) => (
@@ -76,9 +69,9 @@ const columns: ColumnDef<Application>[] = [
     ),
     cell: ({ row }) => (
       <div className="w-40">
-        <Progress value={row.original.progress} />
+        <Progress value={STAGE_PROGRESS[row.original.status] ?? 0} />
         <span className="mt-1.5 block text-xs whitespace-normal text-muted-foreground">
-          {row.original.lastUpdate}
+          {row.original.lastUpdate ?? "No updates yet"}
         </span>
       </div>
     ),
@@ -88,39 +81,40 @@ const columns: ColumnDef<Application>[] = [
     meta: { label: "Next step" },
     header: "Next step",
     cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.nextStep}</span>
+      <span className="text-muted-foreground">{row.original.nextStep ?? "—"}</span>
     ),
   },
   {
-    accessorKey: "appliedOn",
+    id: "applied",
+    accessorFn: (row) => row.daysAgo,
     meta: { label: "Applied" },
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Applied" />
     ),
     cell: ({ row }) => (
       <span className="font-mono text-xs text-muted-foreground tabular-nums">
-        {row.original.appliedOn}
+        {shortDate(row.original.createdAt)}
       </span>
     ),
   },
 ];
 
-export function ApplicationsTable() {
+export function ApplicationsTable({ applications }: { applications: Application[] }) {
   const [stage, setStage] = useState("all");
 
   const data = useMemo(
     () =>
       stage === "all"
         ? applications
-        : applications.filter((item) => item.stage === stage),
-    [stage]
+        : applications.filter((item) => item.status === stage),
+    [stage, applications],
   );
 
   return (
     <DataTable
       columns={columns}
       data={data}
-      searchColumn="jobTitle"
+      searchColumn="role"
       searchPlaceholder="Search applications"
       showViewOptions
       emptyMessage="No applications at this stage."
@@ -131,9 +125,9 @@ export function ApplicationsTable() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All stages</SelectItem>
-            {STAGES.map((option) => (
+            {BOARD_STAGES.map((option) => (
               <SelectItem key={option} value={option}>
-                {option}
+                {statusLabel[option]}
               </SelectItem>
             ))}
           </SelectContent>

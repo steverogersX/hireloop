@@ -1,13 +1,22 @@
+import { redirect } from "next/navigation";
+
 import { RecruiterSidebar } from "@/components/recruiter/recruiter-sidebar";
 import { RecruiterTopBar } from "@/components/recruiter/recruiter-top-bar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { getSession } from "@/lib/session";
 
-export default function RecruiterLayout({
+export const dynamic = "force-dynamic";
+
+export default async function RecruiterLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (session.role === "CANDIDATE") redirect("/dashboard");
+
   return (
     <TooltipProvider>
       <SidebarProvider>

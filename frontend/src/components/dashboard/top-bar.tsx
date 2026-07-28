@@ -35,26 +35,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { activity, candidate } from "@/lib/mock-data";
+import { useShell } from "@/components/dashboard/shell-context";
+import { initialsOf, relativeTime } from "@/lib/format";
 
 const activityIcon = {
-  view: Sparkles,
-  stage: ArrowRight,
-  message: MessageSquare,
-  match: Sparkles,
-  invite: Mail,
+  VIEW: Sparkles,
+  STAGE: ArrowRight,
+  MESSAGE: MessageSquare,
+  MATCH: Sparkles,
+  INVITE: Mail,
 } as const;
-
-const activityHref: Record<string, string> = {
-  view: "/profile",
-  stage: "/applications",
-  message: "/messages",
-  match: "/jobs",
-  invite: "/jobs",
-};
 
 export function TopBar() {
   const { resolvedTheme, setTheme } = useTheme();
+  const { user, activity } = useShell();
   const router = useRouter();
   const [query, setQuery] = useState("");
 
@@ -140,12 +134,12 @@ export function TopBar() {
               const Icon = activityIcon[item.kind];
               return (
                 <DropdownMenuItem key={item.id} asChild className="gap-2.5">
-                  <Link href={activityHref[item.kind] ?? "/dashboard"}>
+                  <Link href={item.href ?? "/dashboard"}>
                     <Icon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
                     <span className="grid gap-0.5">
                       <span className="text-sm leading-snug">{item.title}</span>
                       <span className="text-xs text-muted-foreground">
-                        {item.detail} · {item.time}
+                        {item.detail} · {relativeTime(item.createdAt)}
                       </span>
                     </span>
                   </Link>
@@ -171,16 +165,16 @@ export function TopBar() {
             >
               <Avatar className="size-7">
                 <AvatarFallback className="bg-primary/10 text-[11px] font-medium text-primary">
-                  {candidate.initials}
+                  {initialsOf(user?.name ?? "You")}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="grid gap-0.5">
-              <span className="text-sm font-medium">{candidate.name}</span>
+              <span className="text-sm font-medium">{user?.name ?? "Your account"}</span>
               <span className="text-xs font-normal text-muted-foreground">
-                {candidate.email}
+                {user?.email ?? ""}
               </span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -205,7 +199,13 @@ export function TopBar() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => toast("Signed out")}>
+            <DropdownMenuItem
+              onSelect={async () => {
+                await fetch("/api/auth/logout", { method: "POST" });
+                router.push("/login");
+                router.refresh();
+              }}
+            >
               <LogOut />
               Sign out
             </DropdownMenuItem>

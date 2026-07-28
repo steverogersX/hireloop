@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { ApplicationsTable } from "@/components/dashboard/applications-table";
+import { BOARD_STAGES, stageDot } from "@/components/applications/stage-badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,18 +12,32 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { statusLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { pipeline } from "@/lib/mock-data";
+import type { Application, DashboardStats } from "@/types/api";
 
-export function ApplicationsPanel() {
-  const total = pipeline.reduce((sum, step) => sum + step.count, 0);
+export function ApplicationsPanel({
+  applications,
+  stats,
+}: {
+  applications: Application[];
+  stats: DashboardStats;
+}) {
+  const pipeline = BOARD_STAGES.map((stage) => ({
+    stage,
+    count: stats.pipeline[stage] ?? 0,
+  }));
+  const total = pipeline.reduce((sum, step) => sum + step.count, 0) || 1;
 
   return (
     <Card>
       <CardHeader className="border-b">
         <CardTitle>Your pipeline</CardTitle>
         <CardDescription>
-          34 applications since March · 1 offer waiting on you
+          {stats.applications.total} applications ·{" "}
+          {stats.offers > 0
+            ? `${stats.offers} offer waiting on you`
+            : "no offers yet"}
         </CardDescription>
         <CardAction>
           <Button variant="outline" size="sm" asChild>
@@ -40,7 +55,7 @@ export function ApplicationsPanel() {
             {pipeline.map((step) => (
               <span
                 key={step.stage}
-                className={cn("h-full rounded-full", step.tone)}
+                className={cn("h-full rounded-full", stageDot[step.stage])}
                 style={{ width: `${(step.count / total) * 100}%` }}
                 aria-hidden
               />
@@ -53,10 +68,10 @@ export function ApplicationsPanel() {
                 className="inline-flex items-baseline gap-1.5 text-xs text-muted-foreground"
               >
                 <span
-                  className={cn("size-2 self-center rounded-full", step.tone)}
+                  className={cn("size-2 self-center rounded-full", stageDot[step.stage])}
                   aria-hidden
                 />
-                {step.stage}
+                {statusLabel[step.stage]}
                 <span className="font-mono text-foreground tabular-nums">
                   {step.count}
                 </span>
@@ -65,7 +80,7 @@ export function ApplicationsPanel() {
           </div>
         </div>
 
-        <ApplicationsTable />
+        <ApplicationsTable applications={applications} />
       </CardContent>
     </Card>
   );

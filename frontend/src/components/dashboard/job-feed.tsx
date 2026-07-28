@@ -15,7 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { annualSalary, jobs } from "@/lib/mock-data";
+import { annualSalary } from "@/lib/format";
+import type { ScoredJob } from "@/types/api";
 
 const TABS = [
   { value: "recommended", label: "Recommended" },
@@ -26,56 +27,71 @@ const TABS = [
 
 const filters = [
   {
-    id: "workplace",
+    id: "workMode",
     placeholder: "Workplace",
-    options: ["Any workplace", "Remote", "Hybrid", "On-site"],
+    options: [
+      { value: "any", label: "Any workplace" },
+      { value: "REMOTE", label: "Remote" },
+      { value: "HYBRID", label: "Hybrid" },
+      { value: "ONSITE", label: "On-site" },
+    ],
   },
   {
-    id: "employment",
+    id: "employmentType",
     placeholder: "Job type",
-    options: ["Any type", "Full-time", "Contract", "Part-time", "Internship"],
+    options: [
+      { value: "any", label: "Any type" },
+      { value: "FULL_TIME", label: "Full-time" },
+      { value: "CONTRACT", label: "Contract" },
+      { value: "PART_TIME", label: "Part-time" },
+      { value: "INTERNSHIP", label: "Internship" },
+    ],
   },
   {
     id: "salary",
     placeholder: "Salary",
-    options: ["Any salary", "€60k+", "€80k+", "€100k+", "€120k+"],
+    options: [
+      { value: "any", label: "Any salary" },
+      { value: "60000", label: "60k+" },
+      { value: "80000", label: "80k+" },
+      { value: "100000", label: "100k+" },
+    ],
   },
-];
+] as const;
 
-type Picks = { workplace: string; employment: string; salary: string };
+type Picks = { workMode: string; employmentType: string; salary: string };
 
-const ANY: Picks = {
-  workplace: "Any workplace",
-  employment: "Any type",
-  salary: "Any salary",
-};
+const ANY: Picks = { workMode: "any", employmentType: "any", salary: "any" };
 
-function listFor(tab: string, picks: Picks = ANY) {
+function listFor(jobs: ScoredJob[], tab: string, picks: Picks) {
   const base =
     tab === "saved"
       ? jobs.filter((job) => job.saved)
       : tab === "applied"
         ? jobs.filter((job) => job.applied)
         : tab === "recommended"
-          ? [...jobs].sort((a, b) => b.matchScore - a.matchScore)
-          : jobs;
+          ? [...jobs].sort((a, b) => b.match.score - a.match.score)
+          : [...jobs].sort(
+              (a, b) =>
+                new Date(b.publishedAt ?? 0).getTime() -
+                new Date(a.publishedAt ?? 0).getTime(),
+            );
 
-  const floor = Number(picks.salary.replace(/\D/g, "")) * 1000;
+  const floor = picks.salary === "any" ? 0 : Number(picks.salary);
 
   return base.filter((job) => {
-    if (picks.workplace !== ANY.workplace && job.workplace !== picks.workplace)
-      return false;
-    if (picks.employment !== ANY.employment && job.employment !== picks.employment)
+    if (picks.workMode !== "any" && job.workMode !== picks.workMode) return false;
+    if (picks.employmentType !== "any" && job.employmentType !== picks.employmentType)
       return false;
     if (floor > 0 && annualSalary(job) < floor) return false;
     return true;
   });
 }
 
-export function JobFeed() {
+export function JobFeed({ jobs }: { jobs: ScoredJob[] }) {
   const [tab, setTab] = useState<string>("recommended");
   const [picks, setPicks] = useState<Picks>(ANY);
-  const list = listFor(tab, picks);
+  const list = listFor(jobs, tab, picks).slice(0, 6);
 
   return (
     <section className="grid gap-3">
@@ -86,7 +102,7 @@ export function JobFeed() {
               <TabsTrigger key={item.value} value={item.value}>
                 {item.label}
                 <Badge variant="secondary" className="ml-1.5 font-mono">
-                  {listFor(item.value, picks).length}
+                  {listFor(jobs, item.value, picks).length}
                 </Badge>
               </TabsTrigger>
             ))}
@@ -106,8 +122,8 @@ export function JobFeed() {
                 </SelectTrigger>
                 <SelectContent>
                   {filter.options.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -126,10 +142,10 @@ export function JobFeed() {
           <TabsContent key={item.value} value={item.value} className="grid gap-3">
             <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
               <span>
-                <span className="font-mono tabular-nums text-foreground">
-                  {list.length}
+                <span className="font-mono text-foreground tabular-nums">
+                  {listFor(jobs, item.value, picks).length}
                 </span>{" "}
-                roles · updated 4 minutes ago
+                roles
               </span>
               {item.value === "recommended" && (
                 <span className="inline-flex items-center gap-1">
@@ -162,8 +178,7 @@ function EmptyState({ tab }: { tab: string }) {
     <div className="grid justify-items-center gap-2 rounded-xl border border-dashed px-6 py-12 text-center">
       <p className="font-heading text-sm font-medium">Nothing in {tab} yet</p>
       <p className="max-w-xs text-sm text-muted-foreground">
-        Roles you act on show up here. Start from Recommended — 6 of them match
-        above 85%.
+        Roles you act on show up here. Start from Recommended.
       </p>
       <Button size="sm" className="mt-1" asChild>
         <Link href="/jobs">Browse recommended roles</Link>
