@@ -3,8 +3,8 @@ import Link from "next/link";
 
 import { ProfileStrengthCard } from "@/components/dashboard/side-panels";
 import { CareerHistory } from "@/components/profile/career-history";
-import { ProfileHeaderActions } from "@/components/profile/profile-header-actions";
 import { ProfileForm } from "@/components/profile/profile-form";
+import { ProfileHeaderActions } from "@/components/profile/profile-header-actions";
 import { ResumeFiles } from "@/components/profile/resume-files";
 import { VisibilityCard } from "@/components/profile/visibility-card";
 import {
@@ -22,7 +22,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { candidate } from "@/lib/mock-data";
+import { getProfile } from "@/lib/queries";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Profile & resume — HireLoop",
@@ -30,7 +32,19 @@ export const metadata: Metadata = {
     "Keep your profile, resume and job preferences current so the right roles find you.",
 };
 
-export default function ProfilePage() {
+export default async function ProfilePage() {
+  const profile = await getProfile();
+
+  if (!profile) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-8 text-center">
+        <p className="max-w-sm text-sm text-muted-foreground">
+          Could not load your profile. Check that the API is running.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5">
       <Breadcrumb>
@@ -53,33 +67,34 @@ export default function ProfilePage() {
             Profile & resume
           </h1>
           <p className="text-sm text-muted-foreground">
-            218 recruiters viewed this profile in the last 30 days. Three gaps
-            are holding your score at {candidate.profileStrength}%.
+            {profile.profile.profileViews} recruiters viewed this profile in the
+            last 30 days. Your score sits at {profile.strength.score}%.
           </p>
         </div>
-        <ProfileHeaderActions />
+        <ProfileHeaderActions name={profile.user.name} />
       </header>
 
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_21rem]">
         <div className="grid min-w-0 gap-4">
-          <ProfileForm />
-          <ResumeFiles />
-          <CareerHistory />
+          <ProfileForm profile={profile} />
+          <ResumeFiles resumes={profile.resumes} />
+          <CareerHistory
+            experiences={profile.experiences}
+            educations={profile.educations}
+          />
         </div>
 
         <aside className="grid gap-4 xl:sticky xl:top-18">
-          <ProfileStrengthCard />
-          <VisibilityCard />
+          <ProfileStrengthCard profile={profile} />
+          <VisibilityCard profile={profile.profile} />
 
           <Card>
             <CardHeader>
               <CardTitle>Languages</CardTitle>
-              <CardDescription>
-                Shown on roles that ask for them
-              </CardDescription>
+              <CardDescription>Shown on roles that ask for them</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-2">
-              {candidate.languages.map((language) => (
+              {profile.profile.languages.map((language) => (
                 <div
                   key={language.name}
                   className="flex items-center justify-between gap-2 text-sm"

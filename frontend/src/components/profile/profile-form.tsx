@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
 import { AlertCircle, Plus, X } from "lucide-react";
 import { toast } from "sonner";
@@ -26,7 +27,8 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { candidate } from "@/lib/mock-data";
+import { mutate } from "@/lib/client-api";
+import type { ProfilePayload } from "@/types/api";
 
 const BIO_LIMIT = 800;
 
@@ -59,32 +61,53 @@ const profileSchema = z.object({
 
 type ProfileValues = z.infer<typeof profileSchema>;
 
-export function ProfileForm() {
+export function ProfileForm({ profile }: { profile: ProfilePayload }) {
+  const router = useRouter();
   const [skillDraft, setSkillDraft] = useState("");
 
   const form = useForm({
     defaultValues: {
-      name: candidate.name,
-      headline: candidate.title,
-      location: candidate.location,
-      email: candidate.email,
-      phone: candidate.phone,
-      website: candidate.website,
-      github: candidate.github,
-      linkedin: candidate.linkedin,
-      bio: candidate.bio,
-      skills: candidate.skills,
-      openToWork: candidate.openToWork,
-      noticePeriod: candidate.noticePeriod,
-      desiredRole: "Senior or Staff Frontend Engineer",
-      salaryExpectation: "",
-      workplace: "hybrid",
-      willRelocate: false,
+      name: profile.user.name,
+      headline: profile.user.headline ?? "",
+      location: profile.user.location ?? "",
+      email: profile.user.email,
+      phone: profile.profile.phone ?? "",
+      website: profile.profile.website ?? "",
+      github: profile.profile.github ?? "",
+      linkedin: profile.profile.linkedin ?? "",
+      bio: profile.profile.bio ?? "",
+      skills: profile.profile.skills,
+      openToWork: profile.profile.openToWork,
+      noticePeriod: profile.profile.noticePeriod ?? "1 month",
+      desiredRole: profile.profile.desiredRole ?? "",
+      salaryExpectation: profile.profile.salaryExpectation
+        ? String(profile.profile.salaryExpectation)
+        : "",
+      workplace: (profile.profile.preferredWorkMode ?? "HYBRID").toLowerCase(),
+      willRelocate: profile.profile.willRelocate,
     } as ProfileValues,
     validators: { onChange: profileSchema },
     onSubmit: async ({ value }) => {
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await mutate("/profile", "PATCH", {
+        name: value.name,
+        headline: value.headline,
+        location: value.location,
+        bio: value.bio,
+        phone: value.phone,
+        website: value.website,
+        github: value.github,
+        linkedin: value.linkedin,
+        skills: value.skills,
+        desiredRole: value.desiredRole,
+        salaryExpectation:
+          Number(value.salaryExpectation.replace(/\D/g, "")) || undefined,
+        preferredWorkMode: value.workplace.toUpperCase(),
+        noticePeriod: value.noticePeriod,
+        openToWork: value.openToWork,
+        willRelocate: value.willRelocate,
+      });
       form.reset(value);
+      router.refresh();
       toast.success("Profile saved", {
         description: "Recruiters searching now will see the updated version.",
       });

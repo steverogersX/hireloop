@@ -10,6 +10,11 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import {
+  getConnectedAccounts,
+  getNotificationPreferences,
+  getProfile,
+} from "@/lib/queries";
 
 export const metadata: Metadata = {
   title: "Settings — HireLoop",
@@ -17,7 +22,15 @@ export const metadata: Metadata = {
     "Account, notifications, privacy and connected apps for your HireLoop account.",
 };
 
-export default function SettingsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function SettingsPage() {
+  const [profile, preferences, accounts] = await Promise.all([
+    getProfile(),
+    getNotificationPreferences(),
+    getConnectedAccounts(),
+  ]);
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5">
       <Breadcrumb>
@@ -51,7 +64,13 @@ export default function SettingsPage() {
       </header>
 
       <div className="max-w-4xl">
-        <SettingsTabs />
+        {profile && (
+          <SettingsTabs
+            profile={profile}
+            preferences={preferences}
+            accounts={accounts}
+          />
+        )}
       </div>
     </div>
   );

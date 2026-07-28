@@ -20,8 +20,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { alerts, formatSalary, jobHref, jobs } from "@/lib/mock-data";
+import { formatSalary, initialsOf, jobHref, logoClass } from "@/lib/format";
+import { getAlerts, getJobs } from "@/lib/queries";
 import { cn } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Job alerts — HireLoop",
@@ -29,14 +32,15 @@ export const metadata: Metadata = {
     "Set up alerts so matching roles reach you the morning they are posted.",
 };
 
-export default function AlertsPage() {
+export default async function AlertsPage() {
+  const [alerts, { items: jobs }] = await Promise.all([
+    getAlerts(),
+    getJobs({ sort: "match", limit: 4 }),
+  ]);
+
   const totalNew = alerts
     .filter((alert) => alert.active)
     .reduce((sum, alert) => sum + alert.newCount, 0);
-
-  const recentMatches = [...jobs]
-    .sort((a, b) => b.matchScore - a.matchScore)
-    .slice(0, 4);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5">
@@ -59,28 +63,24 @@ export default function AlertsPage() {
           Job alerts
         </h1>
         <p className="text-sm text-muted-foreground">
-          <span className="font-mono text-foreground tabular-nums">
-            {totalNew}
-          </span>{" "}
-          new roles arrived from your alerts since Monday.
+          <span className="font-mono text-foreground tabular-nums">{totalNew}</span>{" "}
+          new roles arrived from your alerts recently.
         </p>
       </header>
 
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_21rem]">
         <div className="min-w-0">
-          <AlertsManager />
+          <AlertsManager alerts={alerts} />
         </div>
 
         <aside className="grid gap-4 xl:sticky xl:top-18">
           <Card>
             <CardHeader>
               <CardTitle>Latest from your alerts</CardTitle>
-              <CardDescription>
-                Highest scoring roles this week
-              </CardDescription>
+              <CardDescription>Highest scoring roles this week</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-1">
-              {recentMatches.map((job) => (
+              {jobs.map((job) => (
                 <Link
                   key={job.id}
                   href={jobHref(job)}
@@ -89,11 +89,11 @@ export default function AlertsPage() {
                   <span
                     className={cn(
                       "flex size-8 shrink-0 items-center justify-center rounded-lg font-heading text-xs font-semibold",
-                      job.company.logoClass
+                      logoClass(job.company.id)
                     )}
                     aria-hidden
                   >
-                    {job.company.initials}
+                    {initialsOf(job.company.name)}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{job.title}</p>
@@ -101,7 +101,7 @@ export default function AlertsPage() {
                       {job.company.name} · {formatSalary(job)}
                     </p>
                   </div>
-                  <MatchRing score={job.matchScore} size={32} />
+                  <MatchRing score={job.match.score} size={32} />
                 </Link>
               ))}
               <Button variant="ghost" size="sm" className="mt-1 w-full" asChild>
@@ -117,13 +117,13 @@ export default function AlertsPage() {
             <CardContent className="grid gap-2.5 text-sm text-muted-foreground">
               <p className="flex items-start gap-2">
                 <Sparkles className="mt-0.5 size-3.5 shrink-0 text-chart-2" />
-                Narrow alerts beat broad ones. Two specific alerts get read;
-                one catch-all gets ignored.
+                Narrow alerts beat broad ones. Two specific alerts get read; one
+                catch-all gets ignored.
               </p>
               <p className="flex items-start gap-2">
                 <Sparkles className="mt-0.5 size-3.5 shrink-0 text-chart-2" />
-                Instant alerts matter for roles with under 20 applicants —
-                being early is most of the advantage.
+                Instant alerts matter for roles with few applicants — being early is
+                most of the advantage.
               </p>
             </CardContent>
           </Card>

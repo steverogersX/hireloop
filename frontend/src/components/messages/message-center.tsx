@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Archive,
   Building2,
@@ -20,43 +21,70 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { companyHref, threads, type Thread } from "@/lib/mock-data";
+import { mutate } from "@/lib/client-api";
+import {
+  companyHref,
+  initialsOf,
+  logoClass,
+  relativeTime,
+} from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { MessageThread, MessageThreadDetail } from "@/types/api";
 
-export function MessageCenter() {
-  const [activeId, setActiveId] = useState(threads[0].id);
+export function MessageCenter({
+  threads,
+  initialThread,
+  viewerId,
+}: {
+  threads: MessageThread[];
+  initialThread: MessageThreadDetail | null;
+  viewerId: string;
+}) {
+  const router = useRouter();
+  const [activeId, setActiveId] = useState(initialThread?.id ?? threads[0]?.id);
+  const [detail, setDetail] = useState(initialThread);
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
-  const [sent, setSent] = useState<Record<string, string[]>>({});
-  const [starred, setStarred] = useState(
-    () => new Set(threads.filter((t) => t.starred).map((t) => t.id))
-  );
+  const [sending, setSending] = useState(false);
 
-  const toggleStar = (id: string) =>
-    setStarred((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const visible = threads.filter((thread) =>
+    `${thread.company.name} ${thread.subject}`
+      .toLowerCase()
+      .includes(query.toLowerCase()),
+  );
 
   const active = threads.find((thread) => thread.id === activeId) ?? threads[0];
-  const visible = threads.filter((thread) =>
-    `${thread.person} ${thread.company.name} ${thread.subject}`
-      .toLowerCase()
-      .includes(query.toLowerCase())
-  );
 
-  const send = () => {
-    const body = draft.trim();
-    if (!body) return;
-    setSent((prev) => ({
-      ...prev,
-      [active.id]: [...(prev[active.id] ?? []), body],
-    }));
-    setDraft("");
-    toast(`Sent to ${active.person}`);
+  const open = async (id: string) => {
+    setActiveId(id);
+    const next = await fetch(`/api/hireloop/messages/${id}`).then((r) => r.json());
+    setDetail(next.data as MessageThreadDetail);
+    router.refresh();
   };
+
+  const send = async () => {
+    const body = draft.trim();
+    if (!body || !active) return;
+
+    setSending(true);
+    await mutate(`/messages/${active.id}/messages`, "POST", { body });
+    const next = await fetch(`/api/hireloop/messages/${active.id}`).then((r) =>
+      r.json(),
+    );
+    setDetail(next.data as MessageThreadDetail);
+    setDraft("");
+    setSending(false);
+    router.refresh();
+    toast(`Sent to ${active.company.name}`);
+  };
+
+  if (!active) {
+    return (
+      <p className="rounded-xl border border-dashed px-6 py-16 text-center text-sm text-muted-foreground">
+        No conversations yet. Recruiters who write to you land here.
+      </p>
+    );
+  }
 
   return (
     <div className="grid gap-3 lg:grid-cols-[20rem_minmax(0,1fr)] lg:items-start">
@@ -84,8 +112,7 @@ export function MessageCenter() {
                   key={thread.id}
                   thread={thread}
                   active={thread.id === active.id}
-                  starred={starred.has(thread.id)}
-                  onSelect={() => setActiveId(thread.id)}
+                  onSelect={() => open(thread.id)}
                 />
               ))
             )}
@@ -99,18 +126,15 @@ export function MessageCenter() {
             <span
               className={cn(
                 "flex size-10 shrink-0 items-center justify-center rounded-lg font-heading text-xs font-semibold",
-                active.company.logoClass
+                logoClass(active.company.id)
               )}
               aria-hidden
             >
-              {active.company.initials}
+              {initialsOf(active.company.name)}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="font-heading text-base font-medium">
-                {active.subject}
-              </p>
+              <p className="font-heading text-base font-medium">{active.subject}</p>
               <p className="text-sm text-muted-foreground">
-                {active.person} · {active.personRole} ·{" "}
                 <Link
                   href={companyHref(active.company)}
                   className="rounded-sm hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
@@ -123,13 +147,18 @@ export function MessageCenter() {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label={starred.has(active.id) ? "Unstar thread" : "Star thread"}
-                aria-pressed={starred.has(active.id)}
-                onClick={() => toggleStar(active.id)}
+                aria-label="Star thread"
+                aria-pressed={active.starredByCandidate}
+                onClick={async () => {
+                  await mutate(`/messages/${active.id}`, "PATCH", {
+                    starred: !active.starredByCandidate,
+                  });
+                  router.refresh();
+                }}
               >
                 <Star
                   className={cn(
-                    starred.has(active.id) && "fill-chart-2 text-chart-2"
+                    active.starredByCandidate && "fill-chart-2 text-chart-2"
                   )}
                 />
               </Button>
@@ -137,7 +166,11 @@ export function MessageCenter() {
                 variant="ghost"
                 size="icon-sm"
                 aria-label="Archive thread"
-                onClick={() => toast(`Archived the thread with ${active.person}`)}
+                onClick={async () => {
+                  await mutate(`/messages/${active.id}`, "PATCH", { archived: true });
+                  router.refresh();
+                  toast(`Archived the thread with ${active.company.name}`);
+                }}
               >
                 <Archive />
               </Button>
@@ -151,57 +184,37 @@ export function MessageCenter() {
           </div>
 
           <div className="grid gap-3">
-            {active.messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex gap-2.5",
-                  message.from === "me" && "flex-row-reverse"
-                )}
-              >
-                <Avatar className="size-7 shrink-0">
-                  <AvatarFallback className="bg-muted text-[10px] font-medium">
-                    {message.from === "me" ? "PR" : active.initials}
-                  </AvatarFallback>
-                </Avatar>
+            {(detail?.messages ?? []).map((message) => {
+              const mine = message.senderId === viewerId;
+              return (
                 <div
-                  className={cn(
-                    "max-w-prose rounded-xl px-3 py-2 text-sm",
-                    message.from === "me"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
-                  )}
+                  key={message.id}
+                  className={cn("flex gap-2.5", mine && "flex-row-reverse")}
                 >
-                  <p>{message.body}</p>
-                  <p
+                  <Avatar className="size-7 shrink-0">
+                    <AvatarFallback className="bg-muted text-[10px] font-medium">
+                      {initialsOf(message.sender?.name ?? active.company.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div
                     className={cn(
-                      "mt-1 font-mono text-[10px] tabular-nums",
-                      message.from === "me"
-                        ? "text-primary-foreground/70"
-                        : "text-muted-foreground"
+                      "max-w-prose rounded-xl px-3 py-2 text-sm",
+                      mine ? "bg-primary text-primary-foreground" : "bg-muted"
                     )}
                   >
-                    {message.at}
-                  </p>
+                    <p>{message.body}</p>
+                    <p
+                      className={cn(
+                        "mt-1 font-mono text-[10px] tabular-nums",
+                        mine ? "text-primary-foreground/70" : "text-muted-foreground"
+                      )}
+                    >
+                      {relativeTime(message.createdAt)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-
-            {(sent[active.id] ?? []).map((body, index) => (
-              <div key={index} className="flex flex-row-reverse gap-2.5">
-                <Avatar className="size-7 shrink-0">
-                  <AvatarFallback className="bg-muted text-[10px] font-medium">
-                    PR
-                  </AvatarFallback>
-                </Avatar>
-                <div className="max-w-prose rounded-xl bg-primary px-3 py-2 text-sm text-primary-foreground">
-                  <p>{body}</p>
-                  <p className="mt-1 font-mono text-[10px] text-primary-foreground/70 tabular-nums">
-                    Just now
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <Separator />
@@ -217,8 +230,8 @@ export function MessageCenter() {
                 }
               }}
               rows={3}
-              placeholder={`Reply to ${active.person}…`}
-              aria-label={`Reply to ${active.person}`}
+              placeholder={`Reply to ${active.company.name}…`}
+              aria-label="Reply"
             />
             <div className="flex flex-wrap items-center gap-2">
               <Button
@@ -233,10 +246,10 @@ export function MessageCenter() {
                 variant="ghost"
                 size="sm"
                 onClick={() =>
-                  setDraft((prev) =>
-                    prev
-                      ? prev
-                      : `Would any of these work?\n\n· Thursday 14:00\n· Friday 10:30\n· Monday 16:00`
+                  setDraft(
+                    (prev) =>
+                      prev ||
+                      "Would any of these work?\n\n· Thursday 14:00\n· Friday 10:30\n· Monday 16:00",
                   )
                 }
               >
@@ -250,10 +263,10 @@ export function MessageCenter() {
                 size="sm"
                 className="ml-auto"
                 onClick={send}
-                disabled={draft.trim().length === 0}
+                disabled={draft.trim().length === 0 || sending}
               >
                 <Send />
-                Send
+                {sending ? "Sending…" : "Send"}
               </Button>
             </div>
           </div>
@@ -266,12 +279,10 @@ export function MessageCenter() {
 function ThreadRow({
   thread,
   active,
-  starred,
   onSelect,
 }: {
-  thread: Thread;
+  thread: MessageThread;
   active: boolean;
-  starred: boolean;
   onSelect: () => void;
 }) {
   return (
@@ -288,20 +299,20 @@ function ThreadRow({
         <span
           className={cn(
             "flex size-7 shrink-0 items-center justify-center rounded-md font-heading text-[10px] font-semibold",
-            thread.company.logoClass
+            logoClass(thread.company.id)
           )}
           aria-hidden
         >
-          {thread.company.initials}
+          {initialsOf(thread.company.name)}
         </span>
         <span className="min-w-0 flex-1 truncate text-sm font-medium">
-          {thread.person}
+          {thread.company.name}
         </span>
-        {starred && (
+        {thread.starredByCandidate && (
           <Star className="size-3 shrink-0 fill-chart-2 text-chart-2" />
         )}
         <span className="shrink-0 font-mono text-[10px] text-muted-foreground tabular-nums">
-          {thread.lastAt}
+          {relativeTime(thread.lastMessageAt)}
         </span>
       </div>
       <p className="truncate text-xs font-medium">{thread.subject}</p>

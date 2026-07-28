@@ -13,17 +13,33 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { education, experience } from "@/lib/mock-data";
+import { initialsOf, logoClass } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { Education, Experience } from "@/types/api";
 
-export function CareerHistory() {
+function period(experience: Experience) {
+  const format = (value: string) =>
+    new Date(value).toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+
+  return `${format(experience.startDate)} — ${
+    experience.current || !experience.endDate ? "present" : format(experience.endDate)
+  }`;
+}
+
+export function CareerHistory({
+  experiences,
+  educations,
+}: {
+  experiences: Experience[];
+  educations: Education[];
+}) {
   return (
     <>
       <Card>
         <CardHeader>
           <CardTitle>Experience</CardTitle>
           <CardDescription>
-            Eight years, three companies. Recruiters read the top entry first.
+            Recruiters read the top entry first.
           </CardDescription>
           <CardAction>
             <Button
@@ -42,16 +58,22 @@ export function CareerHistory() {
           </CardAction>
         </CardHeader>
         <CardContent className="grid gap-4">
-          {experience.map((role) => (
+          {experiences.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No roles yet. Adding your work history lifts your profile score.
+            </p>
+          )}
+
+          {experiences.map((role) => (
             <div key={role.id} className="flex gap-3">
               <span
                 className={cn(
                   "flex size-10 shrink-0 items-center justify-center rounded-lg font-heading text-xs font-semibold",
-                  role.logoClass
+                  logoClass(role.id)
                 )}
                 aria-hidden
               >
-                {role.initials}
+                {initialsOf(role.company)}
               </span>
 
               <div className="min-w-0 flex-1">
@@ -60,16 +82,15 @@ export function CareerHistory() {
                     <p className="flex flex-wrap items-center gap-2 font-medium">
                       {role.role}
                       {role.current && (
-                        <Badge className="bg-chart-5/12 text-chart-5">
-                          Current
-                        </Badge>
+                        <Badge className="bg-chart-5/12 text-chart-5">Current</Badge>
                       )}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {role.company} · {role.location}
+                      {role.company}
+                      {role.location ? ` · ${role.location}` : ""}
                     </p>
                     <p className="font-mono text-xs text-muted-foreground tabular-nums">
-                      {role.period} · {role.duration}
+                      {period(role)}
                     </p>
                   </div>
                   <Button
@@ -77,30 +98,30 @@ export function CareerHistory() {
                     size="icon-sm"
                     aria-label={`Edit ${role.role} at ${role.company}`}
                     onClick={() =>
-                      toast(`Editing ${role.role}`, {
-                        description: role.company,
-                      })
+                      toast(`Editing ${role.role}`, { description: role.company })
                     }
                   >
                     <Pencil />
                   </Button>
                 </div>
 
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {role.summary}
-                </p>
+                {role.summary && (
+                  <p className="mt-2 text-sm text-muted-foreground">{role.summary}</p>
+                )}
 
-                <ul className="mt-2 grid gap-1.5">
-                  {role.highlights.map((highlight) => (
-                    <li
-                      key={highlight}
-                      className="flex items-start gap-2 text-sm text-muted-foreground"
-                    >
-                      <span className="mt-2 size-1 shrink-0 rounded-full bg-muted-foreground/50" />
-                      {highlight}
-                    </li>
-                  ))}
-                </ul>
+                {role.highlights.length > 0 && (
+                  <ul className="mt-2 grid gap-1.5">
+                    {role.highlights.map((highlight) => (
+                      <li
+                        key={highlight}
+                        className="flex items-start gap-2 text-sm text-muted-foreground"
+                      >
+                        <span className="mt-2 size-1 shrink-0 rounded-full bg-muted-foreground/50" />
+                        {highlight}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           ))}
@@ -122,7 +143,7 @@ export function CareerHistory() {
           </CardAction>
         </CardHeader>
         <CardContent className="grid gap-3">
-          {education.map((entry) => (
+          {educations.map((entry) => (
             <div key={entry.id} className="flex gap-3">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                 <GraduationCap className="size-4" />
@@ -131,11 +152,11 @@ export function CareerHistory() {
                 <p className="font-medium">{entry.school}</p>
                 <p className="text-sm text-muted-foreground">{entry.degree}</p>
                 <p className="font-mono text-xs text-muted-foreground tabular-nums">
-                  {entry.period}
+                  {entry.startYear} — {entry.endYear}
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {entry.detail}
-                </p>
+                {entry.detail && (
+                  <p className="mt-1 text-sm text-muted-foreground">{entry.detail}</p>
+                )}
               </div>
             </div>
           ))}

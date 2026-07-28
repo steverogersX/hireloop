@@ -26,11 +26,48 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  candidate,
-  connectedAccounts,
-  notificationSettings,
-} from "@/lib/mock-data";
+import { mutate } from "@/lib/client-api";
+import type {
+  ConnectedAccount,
+  NotificationPreference,
+  ProfilePayload,
+} from "@/types/api";
+
+const PREFERENCE_LABELS: Record<string, { label: string; detail: string }> = {
+  ALERT_DIGEST: {
+    label: "Job alert digests",
+    detail: "New roles matching your saved alerts.",
+  },
+  APPLICATION_UPDATES: {
+    label: "Application updates",
+    detail: "When a company moves you to a new stage.",
+  },
+  MESSAGES: { label: "Messages", detail: "When a recruiter writes to you." },
+  PROFILE_VIEWS: {
+    label: "Profile views",
+    detail: "A weekly summary of who looked at your profile.",
+  },
+  INTERVIEW_REMINDERS: {
+    label: "Interview reminders",
+    detail: "One day and one hour before each interview.",
+  },
+  PRODUCT_NEWS: {
+    label: "Product news",
+    detail: "Occasional updates about HireLoop itself.",
+  },
+};
+
+const PROVIDER_LABELS: Record<string, { label: string; detail: string }> = {
+  GITHUB: {
+    label: "GitHub",
+    detail: "Imports your public repositories into your profile.",
+  },
+  LINKEDIN: { label: "LinkedIn", detail: "Keeps your work history in sync." },
+  GOOGLE_CALENDAR: {
+    label: "Google Calendar",
+    detail: "Adds interviews to your calendar automatically.",
+  },
+};
 
 const accountSchema = z
   .object({
@@ -59,7 +96,15 @@ const accountSchema = z
 
 type AccountValues = z.infer<typeof accountSchema>;
 
-export function SettingsTabs() {
+export function SettingsTabs({
+  profile,
+  preferences,
+  accounts,
+}: {
+  profile: ProfilePayload;
+  preferences: NotificationPreference[];
+  accounts: ConnectedAccount[];
+}) {
   return (
     <Tabs defaultValue="account" className="gap-3">
       <TabsList>
@@ -70,11 +115,11 @@ export function SettingsTabs() {
       </TabsList>
 
       <TabsContent value="account">
-        <AccountForm />
+        <AccountForm email={profile.user.email} />
       </TabsContent>
 
       <TabsContent value="notifications">
-        <NotificationSettings />
+        <NotificationSettings preferences={preferences} />
       </TabsContent>
 
       <TabsContent value="privacy">
@@ -82,16 +127,16 @@ export function SettingsTabs() {
       </TabsContent>
 
       <TabsContent value="connected">
-        <ConnectedApps />
+        <ConnectedApps accounts={accounts} />
       </TabsContent>
     </Tabs>
   );
 }
 
-function AccountForm() {
+function AccountForm({ email }: { email: string }) {
   const form = useForm({
     defaultValues: {
-      email: candidate.email,
+      email,
       currentPassword: "",
       newPassword: "",
       language: "en",
@@ -271,7 +316,17 @@ function AccountForm() {
   );
 }
 
-function NotificationSettings() {
+function NotificationSettings({
+  preferences,
+}: {
+  preferences: NotificationPreference[];
+}) {
+  const rows = preferences.map((preference) => ({
+    ...preference,
+    label: PREFERENCE_LABELS[preference.key]?.label ?? preference.key,
+    detail: PREFERENCE_LABELS[preference.key]?.detail ?? "",
+  }));
+
   return (
     <Card>
       <CardHeader>
@@ -288,7 +343,7 @@ function NotificationSettings() {
           <span className="w-14 text-center">Push</span>
         </div>
 
-        {notificationSettings.map((setting) => (
+        {rows.map((setting) => (
           <div
             key={setting.id}
             className="flex items-center gap-3 border-b py-2.5 last:border-0"
@@ -300,26 +355,32 @@ function NotificationSettings() {
             <div className="flex w-14 justify-center">
               <Switch
                 defaultChecked={setting.email}
-                onCheckedChange={(value) =>
+                onCheckedChange={async (value) => {
+                  await mutate(`/settings/notifications/${setting.key}`, "PATCH", {
+                    email: value,
+                  });
                   toast(
                     value
                       ? `Email on for ${setting.label.toLowerCase()}`
-                      : `Email off for ${setting.label.toLowerCase()}`
-                  )
-                }
+                      : `Email off for ${setting.label.toLowerCase()}`,
+                  );
+                }}
                 aria-label={`${setting.label} by email`}
               />
             </div>
             <div className="flex w-14 justify-center">
               <Switch
                 defaultChecked={setting.push}
-                onCheckedChange={(value) =>
+                onCheckedChange={async (value) => {
+                  await mutate(`/settings/notifications/${setting.key}`, "PATCH", {
+                    push: value,
+                  });
                   toast(
                     value
                       ? `Push on for ${setting.label.toLowerCase()}`
-                      : `Push off for ${setting.label.toLowerCase()}`
-                  )
-                }
+                      : `Push off for ${setting.label.toLowerCase()}`,
+                  );
+                }}
                 aria-label={`${setting.label} by push`}
               />
             </div>
@@ -393,7 +454,13 @@ function PrivacySettings() {
   );
 }
 
-function ConnectedApps() {
+function ConnectedApps({ accounts }: { accounts: ConnectedAccount[] }) {
+  const rows = accounts.map((account) => ({
+    ...account,
+    name: PROVIDER_LABELS[account.provider]?.label ?? account.provider,
+    detail: PROVIDER_LABELS[account.provider]?.detail ?? "",
+    since: account.connected ? "Connected" : "Not connected",
+  }));
   return (
     <Card>
       <CardHeader>
@@ -403,7 +470,7 @@ function ConnectedApps() {
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-2">
-        {connectedAccounts.map((account) => (
+        {rows.map((account) => (
           <div
             key={account.id}
             className="flex flex-wrap items-center gap-3 rounded-lg bg-muted/50 p-3"
@@ -427,13 +494,18 @@ function ConnectedApps() {
             <Button
               variant={account.connected ? "ghost" : "outline"}
               size="sm"
-              onClick={() =>
+              onClick={async () => {
+                await mutate(
+                  `/settings/connected-accounts/${account.provider}`,
+                  "PATCH",
+                  { connected: !account.connected },
+                );
                 toast(
                   account.connected
                     ? `Disconnected ${account.name}`
-                    : `Connecting ${account.name}…`
-                )
-              }
+                    : `Connected ${account.name}`,
+                );
+              }}
             >
               {account.connected ? "Disconnect" : "Connect"}
             </Button>

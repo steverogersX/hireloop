@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
 import {
   AlertCircle,
@@ -37,7 +38,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
-import { alerts, type Alert } from "@/lib/mock-data";
+import { mutate } from "@/lib/client-api";
+import { relativeTime, shortDate } from "@/lib/format";
+import type { JobAlert } from "@/types/api";
 
 const alertSchema = z.object({
   query: z.string().min(2, "What should this alert watch for?"),
@@ -49,7 +52,7 @@ const alertSchema = z.object({
 
 type AlertValues = z.infer<typeof alertSchema>;
 
-export function AlertsManager() {
+export function AlertsManager({ alerts }: { alerts: JobAlert[] }) {
   return (
     <div className="grid gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -66,6 +69,12 @@ export function AlertsManager() {
         <CreateAlertSheet />
       </div>
 
+      {alerts.length === 0 && (
+        <p className="rounded-xl border border-dashed px-6 py-12 text-center text-sm text-muted-foreground">
+          No alerts yet. Create one and matching roles arrive as they are posted.
+        </p>
+      )}
+
       {alerts.map((alert) => (
         <AlertRow key={alert.id} alert={alert} />
       ))}
@@ -73,7 +82,8 @@ export function AlertsManager() {
   );
 }
 
-function AlertRow({ alert }: { alert: Alert }) {
+function AlertRow({ alert }: { alert: JobAlert }) {
+  const router = useRouter();
   const [active, setActive] = useState(alert.active);
 
   return (
@@ -95,11 +105,11 @@ function AlertRow({ alert }: { alert: Alert }) {
               {!active && <Badge variant="outline">Paused</Badge>}
             </p>
             <p className="text-sm text-muted-foreground">
-              {alert.location} · {alert.frequency}
+              {alert.location ?? "Anywhere"} · {alert.frequency.toLowerCase()}
             </p>
             <p className="font-mono text-xs text-muted-foreground tabular-nums">
-              {alert.created} · {alert.lastSent} · {alert.matchesTotal} matches
-              so far
+              Created {shortDate(alert.createdAt)} · last sent{" "}
+              {relativeTime(alert.lastSentAt)} · {alert.matchesTotal} matches so far
             </p>
           </div>
 
@@ -110,7 +120,7 @@ function AlertRow({ alert }: { alert: Alert }) {
               aria-label={`Edit the ${alert.query} alert`}
               onClick={() =>
                 toast(`Editing "${alert.query}"`, {
-                  description: `${alert.location} · ${alert.frequency}`,
+                  description: `${alert.location ?? "Anywhere"} · ${alert.frequency}`,
                 })
               }
             >
@@ -120,18 +130,22 @@ function AlertRow({ alert }: { alert: Alert }) {
               variant="ghost"
               size="icon-sm"
               aria-label="Delete alert"
-              onClick={() => toast(`Deleted the "${alert.query}" alert`)}
+              onClick={async () => {
+                await mutate(`/alerts/${alert.id}`, "DELETE");
+                router.refresh();
+                toast(`Deleted the "${alert.query}" alert`);
+              }}
             >
               <Trash2 />
             </Button>
             <Switch
               checked={active}
-              onCheckedChange={(value) => {
+              onCheckedChange={async (value) => {
                 setActive(value);
+                await mutate(`/alerts/${alert.id}`, "PATCH", { active: value });
+                router.refresh();
                 toast(
-                  value
-                    ? `"${alert.query}" is on again`
-                    : `Paused "${alert.query}"`
+                  value ? `"${alert.query}" is on again` : `Paused "${alert.query}"`,
                 );
               }}
               aria-label={`Alert for ${alert.query}`}
@@ -140,19 +154,19 @@ function AlertRow({ alert }: { alert: Alert }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 border-t pt-3">
-          {alert.filters.map((filter) => (
-            <Badge key={filter} variant="secondary">
-              {filter}
+          {Object.entries(alert.filters).map(([key, value]) => (
+            <Badge key={key} variant="secondary">
+              {key}: {Array.isArray(value) ? value.join(", ") : String(value)}
             </Badge>
           ))}
           <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-            {alert.channels.includes("Email") && (
+            {alert.channels.includes("EMAIL") && (
               <span className="inline-flex items-center gap-1">
                 <Mail className="size-3.5" />
                 Email
               </span>
             )}
-            {alert.channels.includes("Push") && (
+            {alert.channels.includes("PUSH") && (
               <span className="inline-flex items-center gap-1">
                 <Smartphone className="size-3.5" />
                 Push
@@ -166,21 +180,34 @@ function AlertRow({ alert }: { alert: Alert }) {
 }
 
 function CreateAlertSheet() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   const form = useForm({
     defaultValues: {
       query: "",
-      location: "Remote — Europe",
-      frequency: "Daily",
+      location: "Remote",
+      frequency: "DAILY",
       email: true,
       push: false,
     } as AlertValues,
     validators: { onChange: alertSchema },
     onSubmit: async ({ value }) => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const channels = [
+        ...(value.email ? ["EMAIL"] : []),
+        ...(value.push ? ["PUSH"] : []),
+      ];
+
+      await mutate("/alerts", "POST", {
+        query: value.query,
+        location: value.location,
+        frequency: value.frequency,
+        channels: channels.length ? channels : ["EMAIL"],
+      });
+
       setOpen(false);
       form.reset();
+      router.refresh();
       toast.success("Alert created", {
         description: `Matching roles for "${value.query}" will arrive ${value.frequency.toLowerCase()}.`,
       });
@@ -248,19 +275,16 @@ function CreateAlertSheet() {
             {(field) => (
               <div className="grid gap-2">
                 <Label htmlFor={field.name}>How often</Label>
-                <Select
-                  value={field.state.value}
-                  onValueChange={field.handleChange}
-                >
+                <Select value={field.state.value} onValueChange={field.handleChange}>
                   <SelectTrigger id={field.name} className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Instant">
+                    <SelectItem value="INSTANT">
                       Instantly, as roles are posted
                     </SelectItem>
-                    <SelectItem value="Daily">Once a day, 08:00</SelectItem>
-                    <SelectItem value="Weekly">Mondays, 08:00</SelectItem>
+                    <SelectItem value="DAILY">Once a day, 08:00</SelectItem>
+                    <SelectItem value="WEEKLY">Mondays, 08:00</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -276,7 +300,7 @@ function CreateAlertSheet() {
                     checked={field.state.value}
                     onCheckedChange={(value) => field.handleChange(value === true)}
                   />
-                  Email to priya.raman@example.com
+                  Email
                 </label>
               )}
             </form.Field>
@@ -294,11 +318,7 @@ function CreateAlertSheet() {
           </div>
 
           <SheetFooter className="flex-row justify-end gap-2 px-0">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setOpen(false)}
-            >
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
               Cancel
             </Button>
             <form.Subscribe
@@ -330,9 +350,7 @@ function FieldError({ field }: { field: FieldLike }) {
 
   const message = errors
     .map((error) =>
-      typeof error === "string"
-        ? error
-        : ((error as { message?: string })?.message ?? "")
+      typeof error === "string" ? error : ((error as { message?: string })?.message ?? ""),
     )
     .filter(Boolean)[0];
 

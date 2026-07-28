@@ -4,9 +4,8 @@ import { Download, ExternalLink, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { candidate } from "@/lib/mock-data";
 
-export function ProfileHeaderActions() {
+export function ProfileHeaderActions({ name }: { name: string }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Button
@@ -24,7 +23,7 @@ export function ProfileHeaderActions() {
         variant="outline"
         onClick={() =>
           toast("Public profile preview", {
-            description: `hireloop.com/in/${candidate.name.toLowerCase().replace(/\s+/g, "-")}`,
+            description: `hireloop.com/in/${name.toLowerCase().replace(/\s+/g, "-")}`,
           })
         }
       >
